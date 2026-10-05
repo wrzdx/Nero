@@ -11,6 +11,8 @@ import (
 	"messenger/internal/core/postgres"
 	http_middleware "messenger/internal/core/transport/http/middleware"
 	http_server "messenger/internal/core/transport/http/server"
+	web_handlers "messenger/internal/web/handlers"
+	"net/http"
 
 	auth_postgres_repository "messenger/internal/features/auth/repository/postgres"
 	auth_service "messenger/internal/features/auth/service"
@@ -168,6 +170,22 @@ func main() {
 	routerV1.Get("/ws", realtimeWS.ServeHTTP)
 
 	router.Mount("/api/v1", routerV1)
+	webAuth := web_handlers.NewAuthHandler(authService, cookieManager, jwtProvider, cfg.AccessTokenTTL, cfg.Environment.IsProduction(), logger.Logger)
+	router.Group(func(pages chi.Router) {
+		pages.Use(http.NewCrossOriginProtection().Handler)
+		pages.Get("/register", webAuth.RegisterPage)
+		pages.Post("/register", webAuth.Register)
+		pages.Get("/login", webAuth.LoginPage)
+		pages.Post("/login", webAuth.Login)
+		pages.Get("/welcome", webAuth.Welcome)
+	})
+	router.Handle(
+		"/static/*",
+		http.StripPrefix(
+			"/static/",
+			http.FileServer(http.Dir(cfg.StaticDir)),
+		),
+	)
 	httpServer := http_server.NewHTTPServer(
 		httpConfig,
 		logger,

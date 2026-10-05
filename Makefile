@@ -9,6 +9,8 @@ MERMAID_BROWSER ?= C:/Program Files/Google/Chrome/Application/chrome.exe
 export PUPPETEER_EXECUTABLE_PATH := $(MERMAID_BROWSER)
 endif
 
+.PHONY: deploy logs
+
 env-up:
 	@docker compose up -d postgres
 
@@ -58,6 +60,9 @@ migrate-action:
 		-database postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?sslmode=disable \
 		${action}
 
+logs:
+	@docker compose logs --tail=100 messenger
+
 logs-cleanup:
 	@read -p "Очистить все log файлы? Опасность утери логов. [y/N]: " ans; \
 	if [ "$$ans" = "y" ]; then \
@@ -70,8 +75,15 @@ logs-cleanup:
 run:
 	@export LOGGER_FOLDER=${PROJECT_ROOT}/out/logs && \
 	export POSTGRES_HOST=localhost && \
+	export STATIC_DIR=./web/static && \
 	go mod tidy && \
 	go run ${PROJECT_ROOT}/cmd/messenger/main.go
+
+dev:
+	@export LOGGER_FOLDER="${PROJECT_ROOT}/out/logs" && \
+	export POSTGRES_HOST=localhost && \
+	export STATIC_DIR="${PROJECT_ROOT}/web/static" && \
+	go tool templ generate --watch --proxy="http://localhost:5050" --cmd="go run ./cmd/messenger"
 
 deploy:
 	@docker compose up -d --build messenger
@@ -129,3 +141,12 @@ test-integration:
 	@ export POSTGRES_HOST=localhost && \
 	export POSTGRES_DB=${POSTGRES_TEST_DB} && \
 	go test -tags=integration -count=1 ${or ${action},./...}
+
+css-watch:
+	npx @tailwindcss/cli -i ./web/styles/input.css -o ./web/static/css/app.css --watch
+
+css-build:
+	npx @tailwindcss/cli -i ./web/styles/input.css -o ./web/static/css/app.css --minify
+
+templ-generate:
+	go tool templ generate

@@ -1,0 +1,52 @@
+@import "tailwindcss" source(none);
+@source "../../internal/web/views";
+
+@theme {
+  --color-nero-bg: #0b0c0b;
+  --color-nero-surface: #151613;
+  --color-nero-border: #2a2c27;
+  --color-nero-text: #ddd8cb;
+  --color-nero-muted: #9c9c91;
+  --color-nero-accent: #bc7e69;
+  --color-nero-story: #0c0d0b;
+  --color-nero-input-border: #32352d;
+  --color-nero-button: #d9d4c7;
+  --color-nero-button-hover: #eeeadf;
+  --color-nero-button-ink: #151610;
+  --radius-nero: 5px;
+
+  --font-nero: "IBM Plex Mono", monospace;
+}
+
+@layer base {
+  html { color-scheme: dark; }
+  button, a, input { -webkit-tap-highlight-color: transparent; }
+  button { cursor: pointer; }
+  ::selection { background: var(--color-nero-accent); color: var(--color-nero-bg); }
+}
+
+@layer components {
+  .auth-input {
+    @apply min-h-12 w-full rounded-nero border border-nero-input-border bg-nero-surface px-3.5 py-3 text-base leading-6 text-nero-text placeholder:text-nero-muted/70 md:text-xs;
+  }
+  .auth-input:focus {
+    outline: none;
+    border-color: var(--color-nero-accent);
+    box-shadow: 0 0 0 1px color-mix(in srgb, var(--color-nero-accent) 15%, transparent);
+  }
+  .auth-input[aria-invalid="true"] { border-color: var(--color-nero-accent); }
+  .auth-link {
+    @apply rounded-sm text-nero-text underline decoration-nero-muted/60 underline-offset-4 hover:text-nero-accent hover:decoration-nero-accent focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-nero-accent;
+  }
+}
+
+.auth-orbit { width: 115%; max-width: none; top: 75px; left: -7.5%; opacity: .15; }
+
+@media (min-width: 1280px) {
+  body { display: flex; min-height: 100svh; align-items: center; justify-content: center; padding: 32px; }
+  .auth-shell { width: 1100px; min-height: 760px; border: 1px solid var(--color-nero-border); border-radius: 8px; overflow: hidden; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition-duration: 0s !important; }
+}

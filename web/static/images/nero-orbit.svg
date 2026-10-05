@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600" fill="none" role="img" aria-labelledby="title">
+ <title id="title">Nero — графика пересечений</title>
+ <g stroke="#ddd8cb" stroke-width="1">
+  <circle cx="300" cy="300" r="214" stroke-dasharray="680 70 300 55" transform="rotate(-28 300 300)"/>
+  <circle cx="300" cy="300" r="156" stroke-dasharray="415 90 240 120" transform="rotate(18 300 300)"/>
+  <circle cx="300" cy="300" r="110" stroke-dasharray="370 140" transform="rotate(110 300 300)"/>
+  <path d="M88 513 468 133M67 257l478 83M287 80l29 464M108 427c162-35 224-162 384-105"/>
+  <circle cx="190" cy="411" r="7" fill="#0b0c0b"/>
+  <circle cx="453" cy="148" r="7" fill="#0b0c0b"/>
+  <circle cx="300" cy="300" r="14" fill="#0b0c0b"/>
+  <path d="m300 295-5 5 5 5 5-5-5-5Z"/>
+  <path d="M297 56v12m32-9-1 12m30-5-3 12m29-2-4 11m29 3-6 11m27 7-7 10m25 10-9 9M523 395l-11-5m-2 29-10-6m-6 27-9-8M78 191l11 5m1-29 11 6m5-28 10 8"/>
+ </g>
+</svg>

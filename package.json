@@ -1,0 +1,30 @@
+{
+  "name": "messenger",
+  "version": "1.0.0",
+  "description": "Production-oriented messenger backend written in Go as a learning project. The codebase focuses on explicit domain invariants, transaction boundaries, concurrency safety, and integration-tested PostgreSQL repositories.",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "css:watch": "tailwindcss -i ./web/styles/input.css -o ./web/static/css/app.css --watch",
+    "css:build": "tailwindcss -i ./web/styles/input.css -o ./web/static/css/app.css --minify",
+    "templ:generate": "go tool templ generate",
+    "build:ui": "npm run templ:generate && npm run css:build"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/wrzdx/Messenger.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/wrzdx/Messenger/issues"
+  },
+  "homepage": "https://github.com/wrzdx/Messenger#readme",
+  "devDependencies": {
+    "@tailwindcss/cli": "^4.3.3",
+    "tailwindcss": "^4.3.3"
+  }
+}

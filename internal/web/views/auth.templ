@@ -1,0 +1,112 @@
+package web_views
+
+import "strconv"
+
+templ Brand() {
+    <a href="/login" aria-label="Nero — вход" class="inline-flex w-fit items-center gap-3 rounded-sm focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-nero-accent">
+        <img src="/static/images/nero-cut.svg" width="34" height="34" alt=""/>
+        <span class="text-[26px] font-medium tracking-[-1px]">Nero</span>
+    </a>
+}
+
+templ AuthShell(title string, register bool) {
+    @Layout(title) {
+        <div class="auth-shell grid min-h-svh grid-cols-1 md:grid-cols-[44%_56%]">
+            <aside class="relative isolate hidden min-w-0 flex-col overflow-hidden border-r border-nero-border bg-nero-story p-8 md:flex" aria-label="Nero">
+                @Brand()
+                <img src="/static/images/nero-orbit.svg" alt="" aria-hidden="true" class="auth-orbit pointer-events-none absolute -z-10"/>
+                <blockquote class="mt-auto pt-64 pb-8 text-[clamp(18px,2vw,24px)] leading-[1.8] tracking-[-0.6px]">
+                    if register {
+                        <p>Я здесь ищу только одного,<br/>б*#ть, — покоя, умиротворения<br/>и вот этой гармонии.</p>
+                    } else {
+                        <p>Я, б*#ть, в своём познании<br/>настолько преисполнился…</p>
+                    }
+                </blockquote>
+                <div class="flex items-center justify-between border-t border-nero-border pt-4 text-[11px] text-nero-muted"><span>Nero</span><span lang="ja">黒</span></div>
+            </aside>
+            <main class="flex min-w-0 flex-col px-6 pt-7 pb-8 md:justify-center md:px-10 md:py-12">
+                <div class="mx-auto w-full max-w-83.75">
+                    <div class="mb-16 md:hidden">
+                        @Brand()
+                    </div>
+                    { children... }
+                </div>
+            </main>
+        </div>
+    }
+}
+
+templ FormMessage(message string) {
+    if message != "" {
+        <div role="alert" class="mb-6 rounded-nero border border-nero-accent/40 bg-nero-accent/5 px-4 py-3 text-xs leading-6 text-nero-text">{ message }</div>
+    }
+}
+
+templ FieldHint(id string, hint string, errorMessage string) {
+    if errorMessage != "" {
+        <p id={ id + "-hint" } role="alert" class="text-[11px] leading-6 text-nero-accent">{ errorMessage }</p>
+    } else if hint != "" {
+        <p id={ id + "-hint" } class="text-[11px] leading-6 text-nero-muted">{ hint }</p>
+    }
+}
+
+templ TextField(name string, label string, placeholder string, autocomplete string, value string, errorMessage string, hint string, min int, max int, pattern string) {
+    <div class="flex flex-col gap-2">
+        <label for={ name } class="text-[11px]">{ label }</label>
+        <input
+            id={ name }
+            name={ name }
+            type="text"
+            value={ value }
+            placeholder={ placeholder }
+            autocomplete={ autocomplete }
+            minlength={ strconv.Itoa(min) }
+            maxlength={ strconv.Itoa(max) }
+            if pattern != "" {
+                pattern={ pattern }
+            }
+            if hint != "" || errorMessage != "" {
+                aria-describedby={ name + "-hint" }
+            }
+            aria-invalid={ strconv.FormatBool(errorMessage != "") }
+            class="auth-input"
+            required
+        />
+        @FieldHint(name, hint, errorMessage)
+    </div>
+}
+
+templ PasswordField(autocomplete string, placeholder string, errorMessage string, hint string, min int) {
+    <div class="flex flex-col gap-2">
+        <label for="password" class="text-[11px]">Пароль</label>
+        <div class="relative">
+            <input id="password" name="password" type="password" autocomplete={ autocomplete } placeholder={ placeholder } minlength={ strconv.Itoa(min) } class="auth-input pr-12" aria-invalid={ strconv.FormatBool(errorMessage != "") } required
+                if hint != "" || errorMessage != "" {
+                    aria-describedby="password-hint"
+                }
+            />
+            <button type="button" data-password-toggle aria-controls="password" aria-label="Показать пароль" aria-pressed="false" class="absolute inset-y-0 right-0 flex w-12 items-center justify-center rounded-nero text-nero-muted hover:text-nero-text focus-visible:outline-2 focus-visible:outline-nero-accent">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"></path><circle cx="12" cy="12" r="3"></circle><path data-eye-slash d="m3 3 18 18" class="hidden"></path></svg>
+            </button>
+        </div>
+        @FieldHint("password", hint, errorMessage)
+    </div>
+}
+
+templ SubmitButton(label string) {
+    <button type="submit" class="auth-submit mt-1 flex min-h-12 w-full items-center justify-center gap-3 rounded-nero border border-nero-button bg-nero-button px-4 py-3 text-xs font-medium text-nero-button-ink transition-colors hover:bg-nero-button-hover focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-nero-accent disabled:cursor-wait disabled:opacity-60">
+        <span>{ label }</span>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M4 12h16m-6-6 6 6-6 6"></path></svg>
+    </button>
+}
+
+templ Welcome() {
+    @AuthShell("Вы вошли — Nero", false) {
+        <section aria-labelledby="welcome-title">
+            <p class="mb-3 text-[11px] tracking-[0.12em] text-nero-muted">Всё готово</p>
+            <h1 id="welcome-title" class="text-[26px] font-medium tracking-[-1px]">Вы вошли в Nero.</h1>
+            <p class="mt-4 text-xs leading-7 text-nero-muted">Вход выполнен успешно.</p>
+            <a href="/login" class="auth-link mt-8 inline-block text-xs">Войти в другой аккаунт</a>
+        </section>
+    }
+}
