@@ -9,16 +9,23 @@ Go, npm and Tailwind run on the development machine, not the VPS.
 
 ## Release deployed on 2026-10-05
 
-Active release: `20261005-nero-ui`. Previous release retained for rollback:
-`20260907-5d475a0-wsfix`. The update includes the Nero UI, username-based chat
-inputs and user search. It required no new migrations; PostgreSQL remains at
-version 3 with `dirty=false`.
+Active release: `20261005-nero-branding`, built from commit `aedb5b1` with a clean
+working tree. Previous release retained for rollback: `20261005-nero-ui`.
+The update includes the Nero UI, username-based chat inputs, user search, and
+the module/binary/image rename. It required no new migrations; PostgreSQL remains
+at version 3 with `dirty=false`.
 
 Checks passed through the public HTTPS domain: pages and asset content hashes,
 registration, HTML login cookies, profile/group views, username search,
 WebSocket authentication, message create/edit/delete events and read state.
-The app reported zero restarts after the update. The release was built from the
-working tree; no Git commit or push was performed.
+The public domain is now `nero.wrzdx.tech`; its A record points to
+`151.241.109.138`. Nginx uses `/etc/nginx/sites-available/nero`, proxies to the same
+app port, and serves a dedicated Let's Encrypt certificate with automatic
+renewal. The certificate issued on 2026-10-05 expires on 2027-01-03.
+`APP_ORIGIN` in the retained server environment was updated to the new domain.
+The older Nginx host is still configured, but the old hostname also needs a DNS
+record to remain reachable. Browser cookies are scoped to the hostname, so users
+must sign in again on the new domain.
 
 ## Existing server
 

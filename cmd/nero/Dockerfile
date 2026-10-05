@@ -1,5 +1,8 @@
+FROM golang:1.26.4-bookworm AS go-tools
+
 FROM node:22-bookworm-slim AS frontend
 WORKDIR /app
+COPY --from=go-tools /usr/local/go/bin/gofmt /usr/local/bin/gofmt
 COPY package.json package-lock.json ./
 RUN npm ci
 COPY web ./web
@@ -7,7 +10,7 @@ COPY internal/web/views ./internal/web/views
 COPY scripts/build-assets.mjs ./scripts/build-assets.mjs
 RUN npm run css:build
 
-FROM golang:1.26.4-bookworm AS builder
+FROM go-tools AS builder
 WORKDIR /app
 COPY go.mod go.sum ./
 RUN go mod download
