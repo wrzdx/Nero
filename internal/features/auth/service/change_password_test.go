@@ -5,8 +5,8 @@ import (
 	"errors"
 	"testing"
 
-	"messenger/internal/core/auth"
-	"messenger/internal/core/domain"
+	"github.com/wrzdx/Nero/internal/core/auth"
+	"github.com/wrzdx/Nero/internal/core/domain"
 
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"

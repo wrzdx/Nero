@@ -47,12 +47,27 @@ invalidate an already-issued access JWT or terminate an existing WebSocket.
 | `PUT /auth/password` | `current_password`, `new_password` | `204`; sessions revoked |
 | `GET /users/me` | None | `200`: user profile |
 | `GET /users/{id}` | None | `200`: active user's profile |
+| `GET /users/search` | Query: `q`, optional `limit` (default 10, max 20) | `200`: `users` |
 | `PATCH /users/me` | Any of `username`, `first_name`, `last_name`, `bio` | `200`: updated profile |
 | `DELETE /users/me` | None | `204`; anonymization and session revocation |
 
 The password endpoint and all user endpoints require an access token. User
 profile responses contain `id`, `username`, `first_name`, `last_name`, and `bio`.
 The registration response's user object also includes `created_at`.
+
+User search matches the beginning of username, without case sensitivity. `q`
+accepts whitespace around the value and an optional leading `@`; only ASCII
+letters, digits and underscores are accepted, at most 32 characters after
+normalization. Queries shorter than two characters return an empty `users`
+array. Invalid search values return `400 invalid_user_search`; a nonnumeric
+`limit` returns `400 invalid_request`.
+
+Each search result has `id`, `username` (original display casing), `first_name`
+and nullable `last_name`. The requester and deleted accounts are excluded.
+An expired/deleted requester cannot search. Results are ordered by exact match
+first, then lowercase username and ID, with a fixed maximum of 20. Responses
+use `Cache-Control: no-store`. The search SQL reads only those four public
+columns; passwords, bio and token data are absent from results.
 
 PATCH semantics:
 
@@ -69,12 +84,25 @@ including when it appears in a group-specific route.
 | Method and route | Request | Success |
 | --- | --- | --- |
 | `GET /chats/` | Query: `cursor`, `limit` | `200`: `chats`, `next_cursor` |
-| `POST /chats/directs` | `{"peer_id":"<uuid>"}` | `201` new / `200` existing chat |
-| `POST /chats/groups` | `{"title":"Team","participant_ids":["<uuid>"]}` | `201`: group |
+| `POST /chats/directs` | `{"peer_username":"@daniel_k"}` | `201` new / `200` existing chat |
+| `POST /chats/groups` | `{"title":"Team","participant_usernames":["anya_1"]}` | `201`: group |
 | `PUT /chats/groups/{chat_id}` | `{"title":"New title"}` | `200`: updated group |
 | `GET /chats/groups/{chat_id}/participants` | Query: `cursor`, `limit` | `200`: `participants`, `next_cursor` |
-| `POST /chats/groups/{chat_id}/participants` | `{"participant_ids":["<uuid>"]}` | `200`: per-input results |
-| `DELETE /chats/groups/{chat_id}/participants` | JSON body: `{"target_id":"<uuid>"}` | `204` |
+| `POST /chats/groups/{chat_id}/participants` | `{"participant_usernames":["anya_1"]}` | `200`: per-input results |
+| `DELETE /chats/groups/{chat_id}/participants` | JSON body: `{"target_username":"anya_1"}` | `204` |
+
+Usernames are trimmed, accept one optional leading `@`, and are matched without
+case sensitivity. After removing `@`, names must contain 5–32 ASCII letters,
+digits or underscores. Group creation and addition accept at most 100 input
+names, before deduplication. These four endpoints reject unknown JSON fields,
+including obsolete `peer_id`, `participant_ids` and `target_id`, with `400
+invalid_request`. Only one JSON value is accepted per request.
+
+The service resolves usernames to stable user UUIDs using the existing users
+repository, then calls the existing chat operations and permission checks.
+Each distinct normalized name is looked up once per request; no persistent
+username cache is used. Chat IDs, membership keys and profile URLs remain UUIDs,
+so renaming an account does not change existing conversations.
 
 A chat response contains `id`, `type`, `last_message_id`, `last_activity_at`, and
 `created_at`. Group creation/update responses also contain `title`.
@@ -88,39 +116,45 @@ Chat-list items contain:
   `created_at`, `updated_at`);
 - nullable `last_read_message_id` and numeric `unread_count`.
 
-Direct creation uses the authenticated user and `peer_id`; it does not create a
+Direct creation uses the authenticated user and `peer_username`; it does not create a
 self-chat. Repeating creation for the pair returns the existing chat, not its
-message history.
+message history. Unknown or deleted peers return `404 not_found`.
 
-Group creation automatically adds the creator as `owner`; do not include the
-creator in `participant_ids`. Initial duplicates are rejected. Initial members
-must be available accounts; creation is atomic. An empty initial list is allowed.
+Group creation automatically adds the creator as `owner`. Including the creator's
+username is harmless; repeated usernames resolve to one member. Initial members
+must be available accounts; an unknown/deleted name returns `404 not_found`
+with username-keyed details and no group is created. An empty initial list is allowed.
 
 Any group participant may list participants. Each item contains `user_id`,
-`first_name`, `last_name`, `role`, and `joined_at`. Anonymized accounts remain
-visible through their stored profile values.
+`username`, `first_name`, `last_name`, `role`, and `joined_at`. Anonymized accounts
+remain visible through their stored profile values, including their generated
+`deleted_…` username.
 
 Owners/admins can change the title and add members. Batch addition accepts up to
-100 IDs and returns one result per input, in input order:
+100 usernames and returns one result per input, in input order. Result usernames
+are normalized to lowercase without `@`:
 
 ```json
 {
   "data": [
-    {"user_id":"10000000-0000-4000-8000-000000000001","status":"added"},
-    {"user_id":"10000000-0000-4000-8000-000000000001","status":"already_member"},
-    {"user_id":"10000000-0000-4000-8000-000000000002","status":"unavailable"}
+    {"username":"daniel_k","status":"added"},
+    {"username":"daniel_k","status":"already_member"},
+    {"username":"unknown_user","status":"unavailable"}
   ]
 }
 ```
 
 An empty addition list is permitted. New roles are always `member`. Missing or
 deleted accounts produce `unavailable`; existing members/repeated successful
-IDs produce `already_member`. This is partial acceptance of business outcomes,
+usernames produce `already_member`. Permissions are checked even if all supplied
+names are unavailable. This is partial acceptance of business outcomes,
 not a promise to hide infrastructure failures.
 
-Non-owners may leave using their own `target_id`. An owner may remove other
+Non-owners may leave using their own `target_username`. An owner may remove other
 participants; an admin may remove members. The owner cannot leave through this
-endpoint. Role changes, ownership transfer, and group deletion have no endpoints.
+endpoint. Deleted accounts can still be removed using their generated username
+from the participant list. Role changes, ownership transfer, and group deletion
+have no endpoints.
 
 ## Messages
 

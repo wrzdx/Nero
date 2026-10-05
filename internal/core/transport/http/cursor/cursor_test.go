@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	http_request "messenger/internal/core/transport/http/request"
+	http_request "github.com/wrzdx/Nero/internal/core/transport/http/request"
 
 	"github.com/stretchr/testify/require"
 )

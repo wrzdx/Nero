@@ -6,8 +6,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"messenger/internal/core/auth"
-	http_response "messenger/internal/core/transport/http/response"
+	"github.com/wrzdx/Nero/internal/core/auth"
+	http_response "github.com/wrzdx/Nero/internal/core/transport/http/response"
 
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"

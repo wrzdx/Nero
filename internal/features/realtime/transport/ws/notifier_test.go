@@ -6,8 +6,8 @@ import (
 	"testing"
 	"time"
 
-	"messenger/internal/core/domain"
-	"messenger/internal/core/logger"
+	"github.com/wrzdx/Nero/internal/core/domain"
+	"github.com/wrzdx/Nero/internal/core/logger"
 
 	"github.com/coder/websocket"
 	"github.com/google/uuid"

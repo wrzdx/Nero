@@ -1,6 +1,17 @@
-# Messenger
+# Nero
 
-Production-oriented messenger backend written in Go as a learning project. The
+[![Nero — dark messenger interface](docs/images/nero-home.jpg)](https://nero.wrzdx.tech/)
+
+[Live demo](https://nero.wrzdx.tech/) · [Frontend](docs/frontend.md) · [HTTP API](docs/http-api.md) · [Deployment](docs/deployment.md)
+
+<details>
+<summary>More screens — sign in</summary>
+
+![Nero — sign-in screen](docs/images/nero-login.jpg)
+
+</details>
+
+Nero is a messenger written in Go as a learning project. The
 codebase focuses on explicit domain invariants, transaction boundaries,
 concurrency safety, and integration-tested PostgreSQL repositories.
 
@@ -10,17 +21,20 @@ MVP, not a claim of production readiness or a published version tag.
 
 ## Live deployment
 
-- **HTTP API:** https://messenger.wrzdx.tech/api/v1
-- **WebSocket:** `wss://messenger.wrzdx.tech/api/v1/ws`
+- **Domain:** https://nero.wrzdx.tech/
+- **HTTP API:** https://nero.wrzdx.tech/api/v1
+- **WebSocket:** `wss://nero.wrzdx.tech/api/v1/ws`
 
-The deployment serves the backend only; there is no web UI at the domain root.
-Protected HTTP routes require a Bearer access token. WebSocket authentication
+Nero serves a homepage, registration/login, chats, user search, group management
+and profile settings. Browser pages use HttpOnly session cookies; see the
+[frontend notes](docs/frontend.md) and [deployment guide](docs/deployment.md).
+Protected JSON routes require a Bearer access token. WebSocket authentication
 uses the first message, as described in the [protocol](docs/websocket.md).
 
 To check that the API is reachable:
 
 ```sh
-curl -i https://messenger.wrzdx.tech/api/v1/users/me
+curl -i https://nero.wrzdx.tech/api/v1/users/me
 ```
 
 Without a token, the expected response is `401 Unauthorized` with error code
@@ -36,6 +50,8 @@ or rely on it for durable storage of important conversations.
 - [WebSocket protocol](docs/websocket.md): authentication, events, and a browser example.
 - [Database](docs/database.md): constraints and application-owned invariants.
 - [Development](docs/development.md): configuration, setup, tests, and generation.
+- [Nero frontend](docs/frontend.md): pages, templ, Tailwind, htmx, and asset builds.
+- [Deployment](docs/deployment.md): release bundle, server update, checks, and rollback.
 
 ## Implemented
 
@@ -43,6 +59,8 @@ or rely on it for durable storage of important conversations.
 - Stateful sessions stored in PostgreSQL.
 - Password changes with compare-and-swap and session revocation.
 - Case-insensitive usernames with display casing preserved.
+- Prefix search by username; chat creation and participant management by username.
+- Adaptive Nero UI, server-rendered with templ, Tailwind CSS and htmx.
 - User profile reads and partial updates.
 - Account anonymization with atomic session revocation.
 - Row-level locking for profile updates, account deletion, and the final login
@@ -64,6 +82,7 @@ or rely on it for durable storage of important conversations.
 - pgx
 - JWT access tokens and stateful refresh sessions
 - coder/websocket
+- templ, Tailwind CSS 4, htmx 4, and small browser-side JavaScript modules
 - Docker Compose
 - Zap
 - Testify and Mockery
@@ -77,13 +96,14 @@ blocks and domain types live under `internal/core`.
 ```text
 .
 ├── cmd
-│   └── messenger          # composition root and application entrypoint
+│   └── nero               # composition root and application entrypoint
 ├── internal
 │   ├── core
 │   │   ├── auth           # token, password, and cookie primitives
 │   │   ├── domain         # entities, value objects, and invariants
 │   │   ├── postgres       # pool, transactions, and pgx helpers
 │   │   └── transport      # reusable HTTP infrastructure
+│   ├── web                # HTML handlers and templ views
 │   └── features
 │       ├── auth           # credentials and session lifecycle
 │       ├── users          # profiles and account lifecycle
@@ -92,6 +112,9 @@ blocks and domain types live under `internal/core`.
 │       └── realtime       # WebSocket connections, hub, and notifications
 ├── docs                   # API documentation and database diagram
 ├── migrations             # ordered PostgreSQL migrations
+├── web                    # styles, fonts, SVG assets, and browser scripts
+├── deploy                 # production Compose, Nginx, and smoke checks
+├── scripts                # asset hashes and release packaging
 ├── docker-compose.yaml
 ├── Makefile
 └── README.md
@@ -104,7 +127,7 @@ successful persistence, outside the transaction.
 
 ## Database
 
-![Messenger database schema](docs/database.svg)
+![Nero database schema](docs/database.svg)
 
 The [schema notes](docs/database.md) explain composite uniqueness and which
 cross-table rules are maintained by application code rather than SQL constraints.
@@ -121,6 +144,7 @@ All routes are mounted under `/api/v1`.
 | `POST` | `/auth/logout` | Refresh cookie | Revoke the current session |
 | `PUT` | `/auth/password` | Access token | Change password and revoke sessions |
 | `GET` | `/users/me` | Access token | Get the current user |
+| `GET` | `/users/search` | Access token | Find users by username prefix |
 | `GET` | `/users/{id}` | Access token | Get an active user |
 | `PATCH` | `/users/me` | Access token | Partially update the profile |
 | `DELETE` | `/users/me` | Access token | Anonymize the account and revoke sessions |
@@ -143,7 +167,7 @@ in the response body and supplied through the authorization middleware.
 
 ## Running locally
 
-Requires Go 1.26.4, Docker Compose, GNU Make, and a POSIX-compatible shell
+Requires Go 1.26.4, Node.js/npm, Docker Compose, GNU Make, and a POSIX-compatible shell
 (for example Git Bash on Windows). The Makefile reads and exports `.env`:
 
 ```sh
@@ -152,15 +176,18 @@ cp .env.example .env
 make env-up
 make env-port-forward
 make migrate-up
+npm ci
+npm run build:ui
 make run
 ```
 
-With the example configuration, the API is at `http://localhost:5050/api/v1`.
-There is no bundled frontend. The application does not read `.env` itself;
+With the example configuration, Nero is at `http://localhost:5050/` and the API
+is at `http://localhost:5050/api/v1`. The application does not read `.env` itself;
 export configuration first when running Go directly.
 
-See [development notes](docs/development.md) before using `make deploy`: the
-current application container configuration does not pass all required settings.
+For local Docker startup, `make deploy` builds the UI and Go application, then
+starts the `messenger` service. PostgreSQL and migrations remain separate steps.
+This target is local; it does not update the remote domain.
 
 ## Tests
 
@@ -197,9 +224,9 @@ complete running application.
   changes, typing, presence, and online status have no live events yet.
 - Refresh sessions are revocable; already-issued access JWTs are not immediately
   revoked. Existing sockets are bounded by access-token expiry, not logout.
-- Role changes, ownership transfer, group deletion, attachments, and search are
+- Role changes, ownership transfer, group deletion, attachments, and message search are
   outside the current scope.
 - Some permission/account-state checks intentionally allow concurrent changes;
   not every authorization decision is strictly serialized.
-- Production deployment, rate limiting, monitoring, backup/restore, and load
-  testing remain separate work. The container setup is not a production recipe.
+- The demo deployment uses Docker, Nginx and TLS. Rate limiting, monitoring,
+  backup/restore, and load testing remain separate work.

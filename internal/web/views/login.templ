@@ -1,0 +1,27 @@
+package web_views
+
+templ Login() {
+    @LoginPage(AuthFormData{})
+}
+
+templ LoginPage(data AuthFormData) {
+    @AuthShell("Вход — Nero", false) {
+        @LoginForm(data)
+    }
+}
+
+templ LoginForm(data AuthFormData) {
+    <section id="auth-content" class="w-full min-w-0" aria-labelledby="auth-title">
+        <p class="auth-overline">Снова на связи</p>
+        <h1 id="auth-title" class="auth-title">С возвращением.</h1>
+        <p class="auth-description">Войдите, чтобы продолжить разговор.</p>
+        @FormMessage(data.Message)
+        <form method="post" action="/login" hx-post="/login" hx-target="#auth-content" hx-swap="outerHTML" hx-sync="this:drop" class="auth-form" data-auth-form>
+            @TextField("username", "Имя пользователя", "Ваш username", "username", data.Username, data.Errors["username"], "", 1, 32, "")
+            @PasswordField("current-password", "Введите пароль", data.Errors["password"], "", 1)
+            @SubmitButton("Войти")
+            <p class="auth-network-error hidden text-xs leading-6 text-nero-accent" role="alert">Не удалось связаться с сервером. Попробуйте ещё раз.</p>
+        </form>
+        <p class="auth-switch">Ещё нет аккаунта? <a href="/register" class="auth-link">Создать</a></p>
+    </section>
+}

@@ -5,7 +5,7 @@ package auth_postgres_repository
 import (
 	"testing"
 
-	"messenger/internal/core/postgres"
+	"github.com/wrzdx/Nero/internal/core/postgres"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"

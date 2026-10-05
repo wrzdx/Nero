@@ -5,7 +5,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	core_context "messenger/internal/core/context"
+	core_context "github.com/wrzdx/Nero/internal/core/context"
 
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"

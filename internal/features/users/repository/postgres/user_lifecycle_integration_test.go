@@ -7,8 +7,8 @@ import (
 	"testing"
 	"time"
 
-	"messenger/internal/core/domain"
-	"messenger/internal/core/postgres"
+	"github.com/wrzdx/Nero/internal/core/domain"
+	"github.com/wrzdx/Nero/internal/core/postgres"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"

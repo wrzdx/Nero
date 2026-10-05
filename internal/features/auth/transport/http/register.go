@@ -1,10 +1,10 @@
 package auth_transport_http
 
 import (
-	logger "messenger/internal/core/logger"
-	http_request "messenger/internal/core/transport/http/request"
-	http_response "messenger/internal/core/transport/http/response"
-	auth_service "messenger/internal/features/auth/service"
+	logger "github.com/wrzdx/Nero/internal/core/logger"
+	http_request "github.com/wrzdx/Nero/internal/core/transport/http/request"
+	http_response "github.com/wrzdx/Nero/internal/core/transport/http/response"
+	auth_service "github.com/wrzdx/Nero/internal/features/auth/service"
 	"net/http"
 	"time"
 

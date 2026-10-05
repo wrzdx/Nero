@@ -3,7 +3,7 @@ package auth_bcrypt
 import (
 	"errors"
 	"fmt"
-	"messenger/internal/core/auth"
+	"github.com/wrzdx/Nero/internal/core/auth"
 
 	"golang.org/x/crypto/bcrypt"
 )

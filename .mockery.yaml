@@ -4,4 +4,4 @@ exclude-subpkg-regex:
   - "/repository(?:/|$)"
 
 packages:
-  messenger/internal/features:
+  github.com/wrzdx/Nero/internal/features:

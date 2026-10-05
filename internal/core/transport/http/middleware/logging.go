@@ -1,7 +1,7 @@
 package http_middleware
 
 import (
-	logger "messenger/internal/core/logger"
+	logger "github.com/wrzdx/Nero/internal/core/logger"
 	"net/http"
 
 	"go.uber.org/zap"

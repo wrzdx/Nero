@@ -2,7 +2,7 @@ package http_response
 
 import (
 	"encoding/json"
-	logger "messenger/internal/core/logger"
+	logger "github.com/wrzdx/Nero/internal/core/logger"
 	"net/http"
 
 	"go.uber.org/zap"

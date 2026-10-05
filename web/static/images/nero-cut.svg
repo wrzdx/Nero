@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none" role="img" aria-labelledby="title">
+ <title id="title">Nero — Разрез</title>
+ <g fill="#ddd8cb">
+  <path d="M31 5h2v19l-2 2V5Z"/>
+  <path d="M31 40l2-2v21h-2V40Z"/>
+  <path d="M5 31h19l2 2H5v-2Z"/>
+  <path d="M40 31h19v2H38l2-2Z"/>
+  <path d="m12 13 1.5-1.5L27 25l-3-.3L12 13Z"/>
+  <path d="m39 39 2.5.5L52 50l-1.5 1.5L39 40v-1Z"/>
+  <path d="m12 50 12.5-12.5 3-.3L13.5 51.5 12 50Z"/>
+  <path d="m37 26 13-14 1.5 1.5L39.5 26H37Z"/>
+  <path d="m29 33 5-5 1.5 1.5-5 5L29 33Z"/>
+ </g>
+</svg>

@@ -1,0 +1,242 @@
+package web_views
+
+import "strconv"
+
+templ AppPage(data AppData) {
+	@Layout(data.Title + " — Nero") {
+		@AppView(data)
+	}
+}
+
+templ AppView(data AppData) {
+	@AppRoot(data) {
+		if data.Screen == "chat" {
+			@Conversation(data)
+		} else {
+			<main class="empty-conversation page-enter">
+				<img src="/static/images/nero-cut.svg" width="60" height="60" alt=""/>
+				<h1>Твои разговоры.</h1>
+				<p>Выбери чат или начни новый.</p>
+				<a href="/app/new" class="button-secondary" hx-get="/app/new" hx-target="#app-root" hx-swap="outerHTML transition:true" hx-push-url="true">
+					Новый разговор @Icon("plus")
+				</a>
+			</main>
+		}
+	}
+}
+
+templ AppRoot(data AppData) {
+	<div id="app-root" class={ "app-layout", templ.KV("has-conversation", data.Screen != "list") } data-active-chat={ data.Active } data-title={ data.Title }>
+		@Sidebar(data)
+		{ children... }
+		<div class="toast" id="app-toast" role="status" aria-live="polite" hidden></div>
+	</div>
+}
+
+templ Sidebar(data AppData) {
+	<aside class="app-sidebar" aria-label="Разговоры">
+		<div class="sidebar-brand">
+			@HomeBrand()
+			<a href="/app/new" class="icon-button" aria-label="Новый разговор" hx-get="/app/new" hx-target="#app-root" hx-swap="outerHTML transition:true" hx-push-url="true">
+				@Icon("plus")
+			</a>
+		</div>
+		<div class="sidebar-label"><span>Разговоры</span><span class="connection-dot" data-connection aria-label="Подключение"></span></div>
+		<label class="chat-search">
+			@Icon("search")
+			<input type="search" placeholder="Найти в чатах" aria-label="Найти в чатах" data-chat-search/>
+		</label>
+		<div class="chat-list" id="chat-list">
+			@ChatRows(data.Chats, data.Active)
+			if len(data.Chats) == 0 {
+				<p class="sidebar-empty">Здесь пока тихо.<br/>Начни первый разговор.</p>
+			}
+			@MoreChats(data.MoreChatsURL)
+		</div>
+		<a href="/app/profile" class="sidebar-profile" hx-get="/app/profile" hx-target="#app-root" hx-swap="outerHTML transition:true" hx-push-url="true">
+			<span class="avatar">{ data.Me.Initials }</span><span class="min-w-0"><strong>{ data.Me.Name }</strong><small>{ "@" + data.Me.Username }</small></span>
+			@Icon("user")
+		</a>
+	</aside>
+}
+
+templ ChatRows(rows []ChatRow, active string) {
+	for _, chat := range rows {
+		<a href={ templ.SafeURL("/app/chats/" + chat.ID) } class={ "chat-row", templ.KV("is-active", chat.ID == active) } data-chat-search-value={ chat.Title + " " + chat.Preview } data-chat-id={ chat.ID } hx-get={ "/app/chats/" + chat.ID } hx-target="#app-root" hx-swap="outerHTML transition:true" hx-push-url="true">
+			<span class="avatar">
+				if chat.Group {
+					@Icon("group")
+				} else {
+					{ chat.Initials }
+				}
+			</span>
+			<span class="chat-row-copy"><span class="chat-row-title">{ chat.Title }</span><span class="chat-row-preview">{ chat.Preview }</span></span>
+			<span class="chat-row-meta">
+				<time>{ chat.Time }</time>
+				if chat.Unread > 0 {
+					<span class="unread-badge">{ strconv.Itoa(chat.Unread) }</span>
+				}
+			</span>
+		</a>
+	}
+}
+
+templ MoreChats(url string) {
+	<div id="more-chats">
+		if url != "" {
+			<a href={ templ.SafeURL(url) } class="load-more" hx-get={ url } hx-target="#more-chats" hx-swap="outerHTML">Ещё разговоры</a>
+		}
+	</div>
+}
+
+templ MoreChatRows(rows []ChatRow, url string, active string) {
+	@ChatRows(rows, active)
+	@MoreChats(url)
+}
+
+templ Conversation(data AppData) {
+	<main class="conversation page-enter">
+		<header class="conversation-header">
+			<a href="/app" class="icon-button mobile-back" aria-label="К разговорам" hx-get="/app" hx-target="#app-root" hx-swap="outerHTML transition:true" hx-push-url="true">
+				@Icon("back")
+			</a>
+			<span class="avatar">{ Initials(data.Title) }</span>
+			<div class="min-w-0"><h1>{ data.Title }</h1><p>{ data.Subtitle }</p></div>
+			if data.Group {
+				<a href={ templ.SafeURL("/app/groups/" + data.Active) } class="icon-button ml-auto" aria-label="О группе" hx-get={ "/app/groups/" + data.Active } hx-target="#app-root" hx-swap="outerHTML transition:true" hx-push-url="true">
+					@Icon("group")
+				</a>
+			} else if data.PeerID != "" {
+				<a href={ templ.SafeURL("/app/users/" + data.PeerID) } class="icon-button ml-auto" aria-label="Открыть профиль собеседника" hx-get={ "/app/users/" + data.PeerID } hx-target="#app-root" hx-swap="outerHTML transition:true" hx-push-url="true">
+					@Icon("user")
+				</a>
+			}
+		</header>
+		<div class="message-feed" id="message-feed" data-chat-id={ data.Active }>
+			@Feed(data.Feed)
+		</div>
+		<button class="new-messages" data-new-messages hidden>Новые сообщения ↓</button>
+		@Composer(data.Active, data.ClientMessageID, data.Draft, data.Notice)
+	</main>
+}
+
+templ Feed(data FeedData) {
+	@OlderMessages(data.OlderURL)
+	<div id="message-list">
+		@Messages(data.Messages, data.ChatID)
+	</div>
+	@Watermark(data, false)
+	if len(data.Messages) == 0 {
+		<div class="feed-empty" data-feed-empty><span>Начало разговора.</span><p>Первое слово за тобой.</p></div>
+	}
+}
+
+templ OlderMessages(url string) {
+	<div id="older-messages">
+		if url != "" {
+			<a href={ templ.SafeURL(url) } class="load-more" hx-get={ url } hx-target="#older-messages" hx-swap="outerHTML">Предыдущие сообщения</a>
+		}
+	</div>
+}
+
+templ OlderFeed(data FeedData) {
+	@OlderMessages(data.OlderURL)
+	@Messages(data.Messages, data.ChatID)
+}
+
+templ NewFeed(data FeedData) {
+	@Messages(data.Messages, data.ChatID)
+	@Watermark(data, true)
+}
+
+templ Watermark(data FeedData, outOfBand bool) {
+	<span
+		id="message-watermark"
+		hidden
+		data-cursor={ data.Cursor }
+		data-last-message={ data.LastID }
+		if outOfBand {
+			hx-swap-oob="outerHTML"
+		}
+	></span>
+}
+
+templ Messages(rows []MessageRow, chatID string) {
+	for _, message := range rows {
+		if message.NewDay {
+			<p class="message-day">{ message.Day }</p>
+		}
+		<article id={ "message-" + message.ID } class={ "message-row", templ.KV("is-mine", message.Mine) } data-message-id={ message.ID }>
+			<span class="message-avatar avatar">{ message.Initials }</span>
+			<div class="message-copy"><div class="message-meta"><span>{ message.Sender }</span><time>{ message.Time }</time><small data-edited class={ templ.KV("hidden", !message.Edited) }>изменено</small></div><p class="message-text" data-message-content>{ message.Content }</p></div>
+			if message.Mine {
+				<details class="message-menu">
+					<summary class="icon-button" aria-label="Действия с сообщением">
+						@Icon("dots")
+					</summary>
+					<div class="menu-panel">
+						<button type="button" data-edit-message={ message.ID }>
+							@Icon("edit") Изменить
+						</button>
+						<form method="post" action={ "/app/chats/" + chatID + "/messages/" + message.ID + "/delete" } hx-post={ "/app/chats/" + chatID + "/messages/" + message.ID + "/delete" } hx-target={ "#message-" + message.ID } hx-swap="outerHTML" data-confirm="Удалить сообщение?">
+							<button class="danger-text" type="submit">
+								@Icon("trash") Удалить
+							</button>
+						</form>
+					</div>
+				</details>
+			}
+		</article>
+	}
+}
+
+templ Composer(chatID string, clientID string, draft string, notice string) {
+	<div id="composer" class="composer-wrap">
+		if notice != "" {
+			<p class="composer-error" role="alert">{ notice }</p>
+		}
+		<form class="composer" method="post" action={ "/app/chats/" + chatID + "/messages" } hx-post={ "/app/chats/" + chatID + "/messages" } hx-target="#composer" hx-swap="outerHTML" hx-sync="this:drop" data-message-form>
+			<input type="hidden" name="client_message_id" value={ clientID }/>
+			<textarea name="content" rows="1" maxlength="4096" aria-label="Сообщение" placeholder="Написать сообщение…" required data-composer>{ draft }</textarea>
+			<button type="submit" class="send-button" aria-label="Отправить сообщение">
+				@Icon("arrow")
+			</button>
+		</form>
+	</div>
+}
+
+templ EditMessage(chatID string, messageID string, content string, notice string) {
+	<form id={ "message-" + messageID } class="message-edit" method="post" action={ "/app/chats/" + chatID + "/messages/" + messageID + "/edit" } hx-post={ "/app/chats/" + chatID + "/messages/" + messageID + "/edit" } hx-target={ "#message-" + messageID } hx-swap="outerHTML">
+		if notice != "" {
+			<p role="alert" class="text-nero-accent">{ notice }</p>
+		}
+		<label class="text-xs" for={ "edit-" + messageID }>Изменить сообщение</label><textarea id={ "edit-" + messageID } name="content" class="auth-input" maxlength="4096" required>{ content }</textarea>
+		<div class="flex justify-end gap-3"><a href={ templ.SafeURL("/app/chats/" + chatID) } class="button-secondary">Отмена</a><button type="submit" class="button-primary">Сохранить</button></div>
+	</form>
+}
+
+templ ScreenHeader(title string, subtitle string) {
+	<header class="screen-header">
+		<a href="/app" class="icon-button" aria-label="К разговорам" hx-get="/app" hx-target="#app-root" hx-swap="outerHTML transition:true" hx-push-url="true">
+			@Icon("back")
+		</a>
+		<div>
+			<h1>{ title }</h1>
+			if subtitle != "" {
+				<p>{ subtitle }</p>
+			}
+		</div>
+	</header>
+}
+
+templ AppFailure(message string) {
+	@Layout("Не удалось открыть страницу — Nero") {
+		<main class="error-screen">
+			@HomeBrand()
+			<h1>{ message }</h1>
+			<a href="/app" class="button-secondary">
+				К разговорам @Icon("arrow")
+			</a>
+		</main>
+	}
+}

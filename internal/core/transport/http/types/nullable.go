@@ -2,7 +2,7 @@ package http_types
 
 import (
 	"encoding/json"
-	core_types "messenger/internal/core/types"
+	core_types "github.com/wrzdx/Nero/internal/core/types"
 )
 
 type Nullable[T any] struct {

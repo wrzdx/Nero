@@ -2,9 +2,9 @@ package http_middleware
 
 import (
 	"fmt"
-	logger "messenger/internal/core/logger"
-	http_errmap "messenger/internal/core/transport/http/errmap"
-	http_response "messenger/internal/core/transport/http/response"
+	logger "github.com/wrzdx/Nero/internal/core/logger"
+	http_errmap "github.com/wrzdx/Nero/internal/core/transport/http/errmap"
+	http_response "github.com/wrzdx/Nero/internal/core/transport/http/response"
 	"net/http"
 )
 

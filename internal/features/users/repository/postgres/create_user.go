@@ -3,8 +3,8 @@ package users_postgres_repository
 import (
 	"context"
 	"fmt"
-	"messenger/internal/core/domain"
-	"messenger/internal/core/postgres"
+	"github.com/wrzdx/Nero/internal/core/domain"
+	"github.com/wrzdx/Nero/internal/core/postgres"
 )
 
 func (r *UsersRepository) CreateUser(

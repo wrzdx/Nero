@@ -6,7 +6,7 @@ package realtime_transport_ws
 
 import (
 	"context"
-	"messenger/internal/core/auth"
+	"github.com/wrzdx/Nero/internal/core/auth"
 
 	"github.com/google/uuid"
 	mock "github.com/stretchr/testify/mock"

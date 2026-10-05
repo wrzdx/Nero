@@ -9,12 +9,12 @@ import (
 	"testing"
 	"time"
 
-	core_context "messenger/internal/core/context"
-	"messenger/internal/core/domain"
-	"messenger/internal/core/logger"
-	http_middleware "messenger/internal/core/transport/http/middleware"
-	http_response "messenger/internal/core/transport/http/response"
-	messages_service "messenger/internal/features/messages/service"
+	core_context "github.com/wrzdx/Nero/internal/core/context"
+	"github.com/wrzdx/Nero/internal/core/domain"
+	"github.com/wrzdx/Nero/internal/core/logger"
+	http_middleware "github.com/wrzdx/Nero/internal/core/transport/http/middleware"
+	http_response "github.com/wrzdx/Nero/internal/core/transport/http/response"
+	messages_service "github.com/wrzdx/Nero/internal/features/messages/service"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"

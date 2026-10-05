@@ -1,12 +1,12 @@
 package chats_transport_http
 
 import (
-	core_context "messenger/internal/core/context"
-	"messenger/internal/core/logger"
-	http_cursor "messenger/internal/core/transport/http/cursor"
-	http_request "messenger/internal/core/transport/http/request"
-	http_response "messenger/internal/core/transport/http/response"
-	chats_service "messenger/internal/features/chats/service"
+	core_context "github.com/wrzdx/Nero/internal/core/context"
+	"github.com/wrzdx/Nero/internal/core/logger"
+	http_cursor "github.com/wrzdx/Nero/internal/core/transport/http/cursor"
+	http_request "github.com/wrzdx/Nero/internal/core/transport/http/request"
+	http_response "github.com/wrzdx/Nero/internal/core/transport/http/response"
+	chats_service "github.com/wrzdx/Nero/internal/features/chats/service"
 	"net/http"
 	"strconv"
 	"time"
@@ -93,6 +93,7 @@ func (h *ChatsHandler) ListGroupParticipants(w http.ResponseWriter, r *http.Requ
 	for index, item := range page.Participants {
 		response.Participants[index] = GroupParticipantResponse{
 			UserID:    item.ID,
+			Username:  item.Username,
 			FirstName: item.FirstName,
 			LastName:  item.LastName,
 			Role:      item.Role,
@@ -115,6 +116,7 @@ type ListGroupParticipantsResponse struct {
 
 type GroupParticipantResponse struct {
 	UserID    uuid.UUID `json:"user_id"`
+	Username  string    `json:"username"`
 	FirstName string    `json:"first_name"`
 	LastName  *string   `json:"last_name"`
 	Role      string    `json:"role"`

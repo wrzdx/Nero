@@ -2,6 +2,7 @@
 FROM alpine:3.23.5
 WORKDIR /app
 RUN mkdir /app/logs && chown 10001:10001 /app/logs
-COPY --chmod=0555 bin/messenger /app/messenger
+COPY --chmod=0555 bin/nero /app/nero
+COPY web/static /app/web/static
 USER 10001:10001
-ENTRYPOINT ["/app/messenger"]
+ENTRYPOINT ["/app/nero"]

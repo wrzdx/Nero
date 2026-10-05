@@ -2,7 +2,7 @@ package core_context
 
 import (
 	"context"
-	logger "messenger/internal/core/logger"
+	logger "github.com/wrzdx/Nero/internal/core/logger"
 
 	"github.com/google/uuid"
 )

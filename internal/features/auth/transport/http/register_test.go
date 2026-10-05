@@ -7,10 +7,10 @@ import (
 	"testing"
 	"time"
 
-	"messenger/internal/core/auth"
-	"messenger/internal/core/domain"
-	http_response "messenger/internal/core/transport/http/response"
-	auth_service "messenger/internal/features/auth/service"
+	"github.com/wrzdx/Nero/internal/core/auth"
+	"github.com/wrzdx/Nero/internal/core/domain"
+	http_response "github.com/wrzdx/Nero/internal/core/transport/http/response"
+	auth_service "github.com/wrzdx/Nero/internal/features/auth/service"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/mock"

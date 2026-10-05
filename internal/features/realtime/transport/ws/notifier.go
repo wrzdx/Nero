@@ -2,8 +2,8 @@ package realtime_transport_ws
 
 import (
 	"context"
-	"messenger/internal/core/domain"
-	"messenger/internal/core/logger"
+	"github.com/wrzdx/Nero/internal/core/domain"
+	"github.com/wrzdx/Nero/internal/core/logger"
 
 	"github.com/google/uuid"
 	"go.uber.org/zap"

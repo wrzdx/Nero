@@ -9,11 +9,11 @@ import (
 	"testing"
 	"time"
 
-	"messenger/internal/core/domain"
-	"messenger/internal/core/logger"
-	http_cursor "messenger/internal/core/transport/http/cursor"
-	http_response "messenger/internal/core/transport/http/response"
-	chats_service "messenger/internal/features/chats/service"
+	"github.com/wrzdx/Nero/internal/core/domain"
+	"github.com/wrzdx/Nero/internal/core/logger"
+	http_cursor "github.com/wrzdx/Nero/internal/core/transport/http/cursor"
+	http_response "github.com/wrzdx/Nero/internal/core/transport/http/response"
+	chats_service "github.com/wrzdx/Nero/internal/features/chats/service"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/mock"
@@ -30,6 +30,7 @@ func TestListGroupParticipants(t *testing.T) {
 		participants := []chats_service.ParticipantInfo{
 			{
 				ID:        uuid.MustParse("00000000-0000-0000-0000-000000000003"),
+				Username:  "owner_user",
 				FirstName: "Owner",
 				LastName:  &lastName,
 				Role:      string(domain.OwnerRole),
@@ -37,6 +38,7 @@ func TestListGroupParticipants(t *testing.T) {
 			},
 			{
 				ID:        uuid.MustParse("00000000-0000-0000-0000-000000000004"),
+				Username:  "deleted_0000000000000000",
 				FirstName: "Deleted Account",
 				Role:      string(domain.MemberRole),
 				JoinedAt:  joinedAt.Add(-time.Minute),
@@ -87,6 +89,7 @@ func TestListGroupParticipants(t *testing.T) {
 		for index, expected := range participants {
 			actual := response.Participants[index]
 			require.Equal(t, expected.ID, actual.UserID)
+			require.Equal(t, expected.Username, actual.Username)
 			require.Equal(t, expected.FirstName, actual.FirstName)
 			require.Equal(t, expected.LastName, actual.LastName)
 			require.Equal(t, expected.Role, actual.Role)

@@ -13,6 +13,7 @@ type Config struct {
 	AccessTokenTTL time.Duration  `envconfig:"AUTH_ACCESS_TOKEN_TTL" default:"15m"`
 	SessionTTL     time.Duration  `envconfig:"AUTH_SESSION_TTL" default:"24h"`
 	TimeZone       *time.Location `ignored:"true"`
+	StaticDir      string         `envconfig:"STATIC_DIR" default:"./web/static"`
 }
 
 func NewConfig() (*Config, error) {

@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"messenger/internal/core/auth"
+	"github.com/wrzdx/Nero/internal/core/auth"
 
 	"github.com/coder/websocket"
 	"github.com/coder/websocket/wsjson"

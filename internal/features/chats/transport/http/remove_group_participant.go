@@ -1,11 +1,11 @@
 package chats_transport_http
 
 import (
-	core_context "messenger/internal/core/context"
-	"messenger/internal/core/logger"
-	http_request "messenger/internal/core/transport/http/request"
-	http_response "messenger/internal/core/transport/http/response"
-	chats_service "messenger/internal/features/chats/service"
+	core_context "github.com/wrzdx/Nero/internal/core/context"
+	"github.com/wrzdx/Nero/internal/core/logger"
+	http_request "github.com/wrzdx/Nero/internal/core/transport/http/request"
+	http_response "github.com/wrzdx/Nero/internal/core/transport/http/response"
+	chats_service "github.com/wrzdx/Nero/internal/features/chats/service"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
@@ -19,7 +19,7 @@ func (h *ChatsHandler) RemoveGroupParticipant(w http.ResponseWriter, r *http.Req
 	claims := core_context.ClaimsRequired(ctx)
 
 	var request RemoveGroupParticipantRequest
-	if err := http_request.DecodeAndValidateRequestBody(r, &request); err != nil {
+	if err := decodeUsernameRequest(r, &request); err != nil {
 		sender.Error(err)
 		return
 	}
@@ -34,14 +34,18 @@ func (h *ChatsHandler) RemoveGroupParticipant(w http.ResponseWriter, r *http.Req
 		))
 		return
 	}
-	targetID := uuid.MustParse(request.TargetID)
+	username, err := requestUsername(request.TargetUsername, "target_username")
+	if err != nil {
+		sender.Error(err)
+		return
+	}
 
-	if err := h.chatsService.RemoveGroupParticipant(
+	if err := h.chatsService.RemoveGroupParticipantByUsername(
 		ctx,
-		chats_service.RemoveGroupParticipantCommand{
-			GroupID:     chatID,
-			RequesterID: claims.UserID,
-			TargetID:    targetID,
+		chats_service.RemoveGroupParticipantByUsernameCommand{
+			GroupID:        chatID,
+			RequesterID:    claims.UserID,
+			TargetUsername: username,
 		}); err != nil {
 		sender.Error(err)
 		return
@@ -51,5 +55,5 @@ func (h *ChatsHandler) RemoveGroupParticipant(w http.ResponseWriter, r *http.Req
 }
 
 type RemoveGroupParticipantRequest struct {
-	TargetID string `json:"target_id" validate:"uuid"`
+	TargetUsername string `json:"target_username" validate:"required"`
 }

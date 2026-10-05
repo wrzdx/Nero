@@ -7,8 +7,8 @@ import (
 	"errors"
 	"testing"
 
-	"messenger/internal/core/domain"
-	"messenger/internal/core/postgres"
+	"github.com/wrzdx/Nero/internal/core/domain"
+	"github.com/wrzdx/Nero/internal/core/postgres"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/stretchr/testify/require"

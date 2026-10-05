@@ -6,10 +6,10 @@ import (
 	"net/http"
 	"testing"
 
-	"messenger/internal/core/auth"
-	"messenger/internal/core/domain"
-	http_request "messenger/internal/core/transport/http/request"
-	http_response "messenger/internal/core/transport/http/response"
+	"github.com/wrzdx/Nero/internal/core/auth"
+	"github.com/wrzdx/Nero/internal/core/domain"
+	http_request "github.com/wrzdx/Nero/internal/core/transport/http/request"
+	http_response "github.com/wrzdx/Nero/internal/core/transport/http/response"
 
 	"github.com/stretchr/testify/require"
 )

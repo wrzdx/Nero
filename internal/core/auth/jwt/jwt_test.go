@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"messenger/internal/core/auth"
+	"github.com/wrzdx/Nero/internal/core/auth"
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"

@@ -10,9 +10,9 @@ import (
 	"testing"
 	"time"
 
-	"messenger/internal/core/domain"
-	"messenger/internal/core/postgres"
-	chats_service "messenger/internal/features/chats/service"
+	"github.com/wrzdx/Nero/internal/core/domain"
+	"github.com/wrzdx/Nero/internal/core/postgres"
+	chats_service "github.com/wrzdx/Nero/internal/features/chats/service"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -266,6 +266,7 @@ func requireParticipantInfosEqual(
 	require.Len(t, actual, len(expected))
 	for index := range expected {
 		require.Equal(t, expected[index].ID, actual[index].ID)
+		require.Equal(t, expected[index].Username, actual[index].Username)
 		require.Equal(t, expected[index].FirstName, actual[index].FirstName)
 		require.Equal(t, expected[index].LastName, actual[index].LastName)
 		require.Equal(t, expected[index].Role, actual[index].Role)

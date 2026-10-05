@@ -2,13 +2,15 @@ package users_service
 
 import (
 	"context"
-	"messenger/internal/core/domain"
+	"github.com/wrzdx/Nero/internal/core/domain"
 	"time"
 
 	"github.com/google/uuid"
 )
 
 type UsersRepository interface {
+	SearchUsers(ctx context.Context, requesterID uuid.UUID, prefix string, limit int) ([]UserSearchResult, error)
+
 	GetUser(
 		ctx context.Context,
 		id uuid.UUID,

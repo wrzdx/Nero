@@ -2,7 +2,7 @@ package messages_service
 
 import (
 	"context"
-	"messenger/internal/core/domain"
+	"github.com/wrzdx/Nero/internal/core/domain"
 
 	"github.com/google/uuid"
 )

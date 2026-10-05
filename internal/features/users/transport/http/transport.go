@@ -1,7 +1,7 @@
 package users_transport_http
 
 import (
-	http_middleware "messenger/internal/core/transport/http/middleware"
+	http_middleware "github.com/wrzdx/Nero/internal/core/transport/http/middleware"
 
 	"github.com/go-chi/chi/v5"
 )
@@ -24,6 +24,7 @@ func NewUsersHandler(
 func (h *UsersHandler) Router(authMW http_middleware.Middleware) chi.Router {
 	router := chi.NewRouter()
 	router.Use(authMW)
+	router.Get("/search", h.SearchUsers)
 	router.Get("/me", h.GetMe)
 	router.Patch("/me", h.PatchMe)
 	router.Delete("/me", h.DeleteMe)

@@ -1,0 +1,31 @@
+{
+  "name": "nero",
+  "version": "1.0.0",
+  "description": "Nero messenger: Go, PostgreSQL, templ, Tailwind CSS and htmx.",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "css:watch": "tailwindcss -i ./web/styles/input.css -o ./web/static/css/app.css --watch",
+    "css:build": "tailwindcss -i ./web/styles/input.css -o ./web/static/css/app.css --minify && npm run assets:build",
+    "assets:build": "node scripts/build-assets.mjs",
+    "templ:generate": "go tool templ generate",
+    "build:ui": "npm run templ:generate && npm run css:build"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/wrzdx/Nero.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/wrzdx/Nero/issues"
+  },
+  "homepage": "https://github.com/wrzdx/Nero#readme",
+  "devDependencies": {
+    "@tailwindcss/cli": "^4.3.3",
+    "tailwindcss": "^4.3.3"
+  }
+}

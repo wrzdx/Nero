@@ -3,7 +3,7 @@ package auth_cookie
 import (
 	"errors"
 	"fmt"
-	"messenger/internal/core/auth"
+	"github.com/wrzdx/Nero/internal/core/auth"
 	"net/http"
 	"time"
 )
