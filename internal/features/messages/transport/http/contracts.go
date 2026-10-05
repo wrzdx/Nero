@@ -2,8 +2,8 @@ package messages_transport_http
 
 import (
 	"context"
-	"messenger/internal/core/domain"
-	messages_service "messenger/internal/features/messages/service"
+	"github.com/wrzdx/Nero/internal/core/domain"
+	messages_service "github.com/wrzdx/Nero/internal/features/messages/service"
 
 	"github.com/google/uuid"
 )

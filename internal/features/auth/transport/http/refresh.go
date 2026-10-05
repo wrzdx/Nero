@@ -2,8 +2,8 @@ package auth_transport_http
 
 import (
 	"fmt"
-	logger "messenger/internal/core/logger"
-	http_response "messenger/internal/core/transport/http/response"
+	logger "github.com/wrzdx/Nero/internal/core/logger"
+	http_response "github.com/wrzdx/Nero/internal/core/transport/http/response"
 	"net/http"
 )
 

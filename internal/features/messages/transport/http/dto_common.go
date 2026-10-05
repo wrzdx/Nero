@@ -1,7 +1,7 @@
 package messages_transport_http
 
 import (
-	"messenger/internal/core/domain"
+	"github.com/wrzdx/Nero/internal/core/domain"
 	"time"
 
 	"github.com/google/uuid"

@@ -1,0 +1,79 @@
+package web_views
+
+templ Home(signedIn bool) {
+	@Layout("Nero — 黒") {
+		<main class="home-page">
+			<header class="home-header">
+				@HomeBrand()
+				<nav aria-label="Навигация">
+					if signedIn {
+						<a href="/app" class="button-secondary">Открыть Nero @Icon("arrow")</a>
+					} else {
+						<a href="/login" class="auth-link text-xs">Войти</a>
+					}
+				</nav>
+			</header>
+			<section class="home-hero">
+				<div class="home-copy page-enter">
+					<p class="eyebrow">MESSENGER / 黒</p>
+					<h1>Nero<span class="text-nero-accent">.</span></h1>
+					<p class="home-caption">Личные чаты. Небольшие группы.<br/>Без лишнего шума.</p>
+					<div class="home-actions">
+						if signedIn {
+							<a href="/app" class="button-primary">К разговорам @Icon("arrow")</a>
+						} else {
+							<a href="/register" class="button-primary">Создать аккаунт @Icon("arrow")</a>
+							<a href="/login" class="button-secondary">Уже есть аккаунт</a>
+						}
+					</div>
+					<p class="home-note">01 / 黒</p>
+				</div>
+				<div class="home-art" aria-hidden="true">
+					<img src="/static/images/nero-orbit.svg" class="home-orbit" alt=""/>
+					<div class="home-chat">
+						<div class="home-chat-header"><span class="avatar">Д</span><span>Даниил<br/><small>Личный разговор</small></span><span class="ml-auto text-nero-muted">···</span></div>
+						<div class="home-chat-body"><p>Всё собралось?<small>23:41</small></p><p class="home-chat-own">С первого раза.<small>23:42</small></p><p>Подозрительно.<small>23:42</small></p></div>
+						<div class="home-chat-input"><span>Сообщение</span>@Icon("arrow")</div>
+					</div>
+					<span class="home-art-label">01 / разговор</span>
+				</div>
+			</section>
+			<footer class="home-footer"><span>Nero / messenger</span><span lang="ja">黒</span></footer>
+		</main>
+	}
+}
+
+templ HomeBrand() {
+	<a href="/" class="brand-link" aria-label="Nero — главная"><img src="/static/images/nero-cut.svg" width="30" height="30" alt=""/><span>Nero</span></a>
+}
+
+templ Icon(name string) {
+	<svg class="ui-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+		switch name {
+			case "arrow":
+				<path d="M4 12h16m-6-6 6 6-6 6"></path>
+			case "back":
+				<path d="M20 12H4m6-6-6 6 6 6"></path>
+			case "plus":
+				<path d="M12 5v14M5 12h14"></path>
+			case "search":
+				<circle cx="10.5" cy="10.5" r="6.5"></circle><path d="m16 16 4 4"></path>
+			case "user":
+				<circle cx="12" cy="8" r="4"></circle><path d="M4 21v-2a8 8 0 0 1 16 0v2"></path>
+			case "logout":
+				<path d="M9 4H4v16h5m5-12 4 4-4 4M8 12h13"></path>
+			case "dots":
+				<circle cx="5" cy="12" r="1"></circle><circle cx="12" cy="12" r="1"></circle><circle cx="19" cy="12" r="1"></circle>
+			case "edit":
+				<path d="m15 4 5 5L9 20l-5 1 1-5L16 5m-3 2 5 5"></path>
+			case "trash":
+				<path d="M3 6h18M9 6V3h6v3M6 6l1 15h10l1-15M10 10v7m4-7v7"></path>
+			case "check":
+				<path d="m5 12 4 4L19 6"></path>
+			case "group":
+				<circle cx="9" cy="8" r="3"></circle><path d="M3 21v-2a6 6 0 0 1 12 0v2m1-16a3 3 0 0 1 0 6m1 4a5 5 0 0 1 4 5"></path>
+			case "close":
+				<path d="m6 6 12 12M6 18 18 6"></path>
+		}
+	</svg>
+}

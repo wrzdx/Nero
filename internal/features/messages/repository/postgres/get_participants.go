@@ -3,7 +3,7 @@ package messages_postgres_repository
 import (
 	"context"
 	"fmt"
-	"messenger/internal/core/postgres"
+	"github.com/wrzdx/Nero/internal/core/postgres"
 
 	"github.com/google/uuid"
 )

@@ -12,17 +12,17 @@ templ RegisterPage(data AuthFormData) {
 
 templ RegisterForm(data AuthFormData) {
     <section id="auth-content" class="w-full min-w-0" aria-labelledby="auth-title">
-        <p class="mb-3 text-[11px] tracking-[0.12em] text-nero-muted">Будем знакомы</p>
-        <h1 id="auth-title" class="text-[26px] font-medium leading-normal tracking-[-1px]">Создать аккаунт.</h1>
-        <p class="mt-2 mb-7 text-xs leading-7 text-nero-muted">Имя пользователя и пароль для входа.</p>
+        <p class="auth-overline">Будем знакомы</p>
+        <h1 id="auth-title" class="auth-title">Создать аккаунт.</h1>
+        <p class="auth-description">Имя пользователя и пароль для входа.</p>
         @FormMessage(data.Message)
-        <form method="post" action="/register" hx-post="/register" hx-target="#auth-content" hx-swap="outerHTML" hx-sync="this:drop" class="flex flex-col gap-5" data-auth-form>
+        <form method="post" action="/register" hx-post="/register" hx-target="#auth-content" hx-swap="outerHTML" hx-sync="this:drop" class="auth-form" data-auth-form>
             @TextField("first_name", "Как вас зовут?", "Ваше имя", "given-name", data.FirstName, data.Errors["first_name"], "", 1, 64, "")
             @TextField("username", "Имя пользователя", "Например, daniel_k", "username", data.Username, data.Errors["username"], "5–32 символа: латиница, цифры и _", 5, 32, "[A-Za-z0-9_]+")
-            @PasswordField("new-password", "Придумайте пароль", data.Errors["password"], "От 15 символов, не более 72 байт.", 15)
+            @PasswordField("new-password", "Придумайте пароль", data.Errors["password"], "От 15 символов, до 72 байт.", 15)
             @SubmitButton("Создать аккаунт")
             <p class="auth-network-error hidden text-xs leading-6 text-nero-accent" role="alert">Не удалось связаться с сервером. Попробуйте ещё раз.</p>
         </form>
-        <p class="mt-6 text-center text-[11px] leading-6 text-nero-muted">Уже есть аккаунт? <a href="/login" class="auth-link">Войти</a></p>
+        <p class="auth-switch">Уже есть аккаунт? <a href="/login" class="auth-link">Войти</a></p>
     </section>
 }

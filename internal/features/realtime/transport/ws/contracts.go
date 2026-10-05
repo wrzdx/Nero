@@ -3,7 +3,7 @@ package realtime_transport_ws
 import (
 	"context"
 	"github.com/google/uuid"
-	"messenger/internal/core/auth"
+	"github.com/wrzdx/Nero/internal/core/auth"
 )
 
 type ParticipantsRepository interface {

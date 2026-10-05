@@ -6,11 +6,11 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"messenger/internal/core/auth"
-	core_context "messenger/internal/core/context"
-	"messenger/internal/core/domain"
-	http_middleware "messenger/internal/core/transport/http/middleware"
-	http_response "messenger/internal/core/transport/http/response"
+	"github.com/wrzdx/Nero/internal/core/auth"
+	core_context "github.com/wrzdx/Nero/internal/core/context"
+	"github.com/wrzdx/Nero/internal/core/domain"
+	http_middleware "github.com/wrzdx/Nero/internal/core/transport/http/middleware"
+	http_response "github.com/wrzdx/Nero/internal/core/transport/http/response"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/mock"

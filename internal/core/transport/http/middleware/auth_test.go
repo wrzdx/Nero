@@ -7,10 +7,10 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"messenger/internal/core/auth"
-	core_context "messenger/internal/core/context"
-	"messenger/internal/core/logger"
-	http_response "messenger/internal/core/transport/http/response"
+	"github.com/wrzdx/Nero/internal/core/auth"
+	core_context "github.com/wrzdx/Nero/internal/core/context"
+	"github.com/wrzdx/Nero/internal/core/logger"
+	http_response "github.com/wrzdx/Nero/internal/core/transport/http/response"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"

@@ -3,7 +3,7 @@ package chats_service
 import (
 	"context"
 	"fmt"
-	"messenger/internal/core/domain"
+	"github.com/wrzdx/Nero/internal/core/domain"
 	"time"
 
 	"github.com/google/uuid"

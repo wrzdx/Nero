@@ -8,9 +8,9 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	http_errmap "messenger/internal/core/transport/http/errmap"
-	http_request "messenger/internal/core/transport/http/request"
-	http_response "messenger/internal/core/transport/http/response"
+	http_errmap "github.com/wrzdx/Nero/internal/core/transport/http/errmap"
+	http_request "github.com/wrzdx/Nero/internal/core/transport/http/request"
+	http_response "github.com/wrzdx/Nero/internal/core/transport/http/response"
 
 	"github.com/stretchr/testify/require"
 )

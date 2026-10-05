@@ -1,7 +1,7 @@
 package users_transport_http
 
 import (
-	"messenger/internal/core/domain"
+	"github.com/wrzdx/Nero/internal/core/domain"
 
 	"github.com/google/uuid"
 )

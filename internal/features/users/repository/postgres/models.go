@@ -2,7 +2,7 @@ package users_postgres_repository
 
 import (
 	"fmt"
-	"messenger/internal/core/domain"
+	"github.com/wrzdx/Nero/internal/core/domain"
 	"time"
 
 	"github.com/google/uuid"

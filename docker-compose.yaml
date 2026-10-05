@@ -1,10 +1,8 @@
 services:
   messenger:
     build:
-      # context: ${PROJECT_ROOT}
-      # dockerfile: ${PROJECT_ROOT}/cmd/messenger/Dockerfile
-      dockerfile: cmd/messenger/Dockerfile
-    container_name: todoapp
+      dockerfile: cmd/nero/Dockerfile
+    container_name: nero-local
     env_file:
       - .env
     environment:

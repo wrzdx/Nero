@@ -3,7 +3,7 @@ package users_service
 import (
 	"context"
 	"fmt"
-	"messenger/internal/core/domain"
+	"github.com/wrzdx/Nero/internal/core/domain"
 
 	"github.com/google/uuid"
 )

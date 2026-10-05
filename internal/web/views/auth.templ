@@ -3,32 +3,33 @@ package web_views
 import "strconv"
 
 templ Brand() {
-    <a href="/login" aria-label="Nero — вход" class="inline-flex w-fit items-center gap-3 rounded-sm focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-nero-accent">
+    <a href="/" aria-label="Nero — главная" class="auth-brand">
         <img src="/static/images/nero-cut.svg" width="34" height="34" alt=""/>
-        <span class="text-[26px] font-medium tracking-[-1px]">Nero</span>
+        <span>Nero</span>
     </a>
 }
 
 templ AuthShell(title string, register bool) {
     @Layout(title) {
-        <div class="auth-shell grid min-h-svh grid-cols-1 md:grid-cols-[44%_56%]">
-            <aside class="relative isolate hidden min-w-0 flex-col overflow-hidden border-r border-nero-border bg-nero-story p-8 md:flex" aria-label="Nero">
+        <div class={ "auth-shell", templ.KV("auth-register", register) }>
+            <aside class="auth-story" aria-label="Nero">
                 @Brand()
-                <img src="/static/images/nero-orbit.svg" alt="" aria-hidden="true" class="auth-orbit pointer-events-none absolute -z-10"/>
-                <blockquote class="mt-auto pt-64 pb-8 text-[clamp(18px,2vw,24px)] leading-[1.8] tracking-[-0.6px]">
+                <div class="auth-orbit" aria-hidden="true"></div>
+                <blockquote class="auth-quote">
                     if register {
                         <p>Я здесь ищу только одного,<br/>б*#ть, — покоя, умиротворения<br/>и вот этой гармонии.</p>
                     } else {
                         <p>Я, б*#ть, в своём познании<br/>настолько преисполнился…</p>
                     }
                 </blockquote>
-                <div class="flex items-center justify-between border-t border-nero-border pt-4 text-[11px] text-nero-muted"><span>Nero</span><span lang="ja">黒</span></div>
+                <div class="auth-story-footer"><span>Nero</span><span lang="ja">黒</span></div>
             </aside>
-            <main class="flex min-w-0 flex-col px-6 pt-7 pb-8 md:justify-center md:px-10 md:py-12">
-                <div class="mx-auto w-full max-w-83.75">
-                    <div class="mb-16 md:hidden">
+            <main class="auth-panel">
+                <div class="auth-body">
+                    <div class="auth-mobile-brand">
                         @Brand()
                     </div>
+                    <div class="auth-mobile-orbit" aria-hidden="true"></div>
                     { children... }
                 </div>
             </main>
@@ -44,14 +45,14 @@ templ FormMessage(message string) {
 
 templ FieldHint(id string, hint string, errorMessage string) {
     if errorMessage != "" {
-        <p id={ id + "-hint" } role="alert" class="text-[11px] leading-6 text-nero-accent">{ errorMessage }</p>
+        <p id={ id + "-hint" } role="alert" class="auth-field-hint text-nero-accent">{ errorMessage }</p>
     } else if hint != "" {
-        <p id={ id + "-hint" } class="text-[11px] leading-6 text-nero-muted">{ hint }</p>
+        <p id={ id + "-hint" } class="auth-field-hint text-nero-muted">{ hint }</p>
     }
 }
 
 templ TextField(name string, label string, placeholder string, autocomplete string, value string, errorMessage string, hint string, min int, max int, pattern string) {
-    <div class="flex flex-col gap-2">
+    <div class="auth-field">
         <label for={ name } class="text-[11px]">{ label }</label>
         <input
             id={ name }
@@ -77,15 +78,15 @@ templ TextField(name string, label string, placeholder string, autocomplete stri
 }
 
 templ PasswordField(autocomplete string, placeholder string, errorMessage string, hint string, min int) {
-    <div class="flex flex-col gap-2">
+    <div class="auth-field">
         <label for="password" class="text-[11px]">Пароль</label>
-        <div class="relative">
+        <div class="auth-password">
             <input id="password" name="password" type="password" autocomplete={ autocomplete } placeholder={ placeholder } minlength={ strconv.Itoa(min) } class="auth-input pr-12" aria-invalid={ strconv.FormatBool(errorMessage != "") } required
                 if hint != "" || errorMessage != "" {
                     aria-describedby="password-hint"
                 }
             />
-            <button type="button" data-password-toggle aria-controls="password" aria-label="Показать пароль" aria-pressed="false" class="absolute inset-y-0 right-0 flex w-12 items-center justify-center rounded-nero text-nero-muted hover:text-nero-text focus-visible:outline-2 focus-visible:outline-nero-accent">
+            <button type="button" data-password-toggle aria-controls="password" aria-label="Показать пароль" aria-pressed="false" class="auth-password-toggle">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"></path><circle cx="12" cy="12" r="3"></circle><path data-eye-slash d="m3 3 18 18" class="hidden"></path></svg>
             </button>
         </div>
@@ -94,7 +95,7 @@ templ PasswordField(autocomplete string, placeholder string, errorMessage string
 }
 
 templ SubmitButton(label string) {
-    <button type="submit" class="auth-submit mt-1 flex min-h-12 w-full items-center justify-center gap-3 rounded-nero border border-nero-button bg-nero-button px-4 py-3 text-xs font-medium text-nero-button-ink transition-colors hover:bg-nero-button-hover focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-nero-accent disabled:cursor-wait disabled:opacity-60">
+    <button type="submit" class="auth-submit">
         <span>{ label }</span>
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M4 12h16m-6-6 6 6-6 6"></path></svg>
     </button>

@@ -6,8 +6,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	core_context "messenger/internal/core/context"
-	"messenger/internal/core/domain"
+	core_context "github.com/wrzdx/Nero/internal/core/context"
+	"github.com/wrzdx/Nero/internal/core/domain"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/mock"

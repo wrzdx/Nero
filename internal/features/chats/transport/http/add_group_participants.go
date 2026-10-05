@@ -1,11 +1,11 @@
 package chats_transport_http
 
 import (
-	core_context "messenger/internal/core/context"
-	"messenger/internal/core/logger"
-	http_request "messenger/internal/core/transport/http/request"
-	http_response "messenger/internal/core/transport/http/response"
-	chats_service "messenger/internal/features/chats/service"
+	core_context "github.com/wrzdx/Nero/internal/core/context"
+	"github.com/wrzdx/Nero/internal/core/logger"
+	http_request "github.com/wrzdx/Nero/internal/core/transport/http/request"
+	http_response "github.com/wrzdx/Nero/internal/core/transport/http/response"
+	chats_service "github.com/wrzdx/Nero/internal/features/chats/service"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
@@ -19,13 +19,14 @@ func (h *ChatsHandler) AddGroupParticipants(w http.ResponseWriter, r *http.Reque
 	claims := core_context.ClaimsRequired(ctx)
 
 	var request AddGroupParticipantsRequest
-	if err := http_request.DecodeAndValidateRequestBody(r, &request); err != nil {
+	if err := decodeUsernameRequest(r, &request); err != nil {
 		sender.Error(err)
 		return
 	}
-	ids := make([]uuid.UUID, 0, len(request.ParticipantIDs))
-	for _, id := range request.ParticipantIDs {
-		ids = append(ids, uuid.MustParse(id))
+	names, err := requestUsernames(request.ParticipantUsernames, "participant_usernames")
+	if err != nil {
+		sender.Error(err)
+		return
 	}
 
 	chatIDStr := chi.URLParam(r, "chat_id")
@@ -37,12 +38,12 @@ func (h *ChatsHandler) AddGroupParticipants(w http.ResponseWriter, r *http.Reque
 		}))
 		return
 	}
-	result, err := h.chatsService.AddGroupParticipants(
+	result, err := h.chatsService.AddGroupParticipantsByUsernames(
 		ctx,
-		chats_service.AddGroupParticipantsCommand{
-			GroupID:        chatID,
-			RequesterID:    claims.UserID,
-			ParticipantIDs: ids,
+		chats_service.AddGroupParticipantsByUsernamesCommand{
+			GroupID:              chatID,
+			RequesterID:          claims.UserID,
+			ParticipantUsernames: names,
 		},
 	)
 	if err != nil {
@@ -53,20 +54,20 @@ func (h *ChatsHandler) AddGroupParticipants(w http.ResponseWriter, r *http.Reque
 	response := make([]AddGroupParticipantItem, 0, len(result))
 	for _, status := range result {
 		response = append(response, AddGroupParticipantItem{
-			UserID: status.UserID,
-			Status: string(status.Status),
+			Username: status.Username,
+			Status:   string(status.Status),
 		})
 	}
 	sender.OK(http.StatusOK, response)
 }
 
 type AddGroupParticipantItem struct {
-	UserID uuid.UUID `json:"user_id"`
-	Status string    `json:"status"`
+	Username string `json:"username"`
+	Status   string `json:"status"`
 }
 
 type AddGroupParticipantsResponse []AddGroupParticipantItem
 
 type AddGroupParticipantsRequest struct {
-	ParticipantIDs []string `json:"participant_ids" validate:"dive,uuid"`
+	ParticipantUsernames []string `json:"participant_usernames"`
 }

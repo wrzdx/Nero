@@ -105,7 +105,7 @@ func LoginForm(data AuthFormData) templ.Component {
 			templ_7745c5c3_Var4 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<section id=\"auth-content\" class=\"w-full min-w-0\" aria-labelledby=\"auth-title\"><p class=\"mb-3 text-[11px] tracking-[0.12em] text-nero-muted\">Снова на связи</p><h1 id=\"auth-title\" class=\"text-[26px] font-medium leading-normal tracking-[-1px]\">С возвращением.</h1><p class=\"mt-2 mb-7 text-xs leading-7 text-nero-muted\">Войдите, чтобы продолжить разговор.</p>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<section id=\"auth-content\" class=\"w-full min-w-0\" aria-labelledby=\"auth-title\"><p class=\"auth-overline\">Снова на связи</p><h1 id=\"auth-title\" class=\"auth-title\">С возвращением.</h1><p class=\"auth-description\">Войдите, чтобы продолжить разговор.</p>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -113,7 +113,7 @@ func LoginForm(data AuthFormData) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "<form method=\"post\" action=\"/login\" hx-post=\"/login\" hx-target=\"#auth-content\" hx-swap=\"outerHTML\" hx-sync=\"this:drop\" class=\"flex flex-col gap-5\" data-auth-form>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "<form method=\"post\" action=\"/login\" hx-post=\"/login\" hx-target=\"#auth-content\" hx-swap=\"outerHTML\" hx-sync=\"this:drop\" class=\"auth-form\" data-auth-form>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -129,7 +129,7 @@ func LoginForm(data AuthFormData) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "<p class=\"auth-network-error hidden text-xs leading-6 text-nero-accent\" role=\"alert\">Не удалось связаться с сервером. Попробуйте ещё раз.</p></form><p class=\"mt-6 text-center text-[11px] leading-6 text-nero-muted\">Ещё нет аккаунта? <a href=\"/register\" class=\"auth-link\">Создать</a></p></section>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "<p class=\"auth-network-error hidden text-xs leading-6 text-nero-accent\" role=\"alert\">Не удалось связаться с сервером. Попробуйте ещё раз.</p></form><p class=\"auth-switch\">Ещё нет аккаунта? <a href=\"/register\" class=\"auth-link\">Создать</a></p></section>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

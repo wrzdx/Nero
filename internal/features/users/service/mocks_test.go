@@ -6,7 +6,7 @@ package users_service
 
 import (
 	"context"
-	"messenger/internal/core/domain"
+	"github.com/wrzdx/Nero/internal/core/domain"
 	"time"
 
 	"github.com/google/uuid"
@@ -237,6 +237,86 @@ func (_c *MockUsersRepository_GetUserForUpdate_Call) Return(user domain.User, er
 }
 
 func (_c *MockUsersRepository_GetUserForUpdate_Call) RunAndReturn(run func(ctx context.Context, userID uuid.UUID) (domain.User, error)) *MockUsersRepository_GetUserForUpdate_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// SearchUsers provides a mock function for the type MockUsersRepository
+func (_mock *MockUsersRepository) SearchUsers(ctx context.Context, requesterID uuid.UUID, prefix string, limit int) ([]UserSearchResult, error) {
+	ret := _mock.Called(ctx, requesterID, prefix, limit)
+
+	if len(ret) == 0 {
+		panic("no return value specified for SearchUsers")
+	}
+
+	var r0 []UserSearchResult
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, uuid.UUID, string, int) ([]UserSearchResult, error)); ok {
+		return returnFunc(ctx, requesterID, prefix, limit)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, uuid.UUID, string, int) []UserSearchResult); ok {
+		r0 = returnFunc(ctx, requesterID, prefix, limit)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]UserSearchResult)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, uuid.UUID, string, int) error); ok {
+		r1 = returnFunc(ctx, requesterID, prefix, limit)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockUsersRepository_SearchUsers_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SearchUsers'
+type MockUsersRepository_SearchUsers_Call struct {
+	*mock.Call
+}
+
+// SearchUsers is a helper method to define mock.On call
+//   - ctx context.Context
+//   - requesterID uuid.UUID
+//   - prefix string
+//   - limit int
+func (_e *MockUsersRepository_Expecter) SearchUsers(ctx any, requesterID any, prefix any, limit any) *MockUsersRepository_SearchUsers_Call {
+	return &MockUsersRepository_SearchUsers_Call{Call: _e.mock.On("SearchUsers", ctx, requesterID, prefix, limit)}
+}
+
+func (_c *MockUsersRepository_SearchUsers_Call) Run(run func(ctx context.Context, requesterID uuid.UUID, prefix string, limit int)) *MockUsersRepository_SearchUsers_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 uuid.UUID
+		if args[1] != nil {
+			arg1 = args[1].(uuid.UUID)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 int
+		if args[3] != nil {
+			arg3 = args[3].(int)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+		)
+	})
+	return _c
+}
+
+func (_c *MockUsersRepository_SearchUsers_Call) Return(userSearchResults []UserSearchResult, err error) *MockUsersRepository_SearchUsers_Call {
+	_c.Call.Return(userSearchResults, err)
+	return _c
+}
+
+func (_c *MockUsersRepository_SearchUsers_Call) RunAndReturn(run func(ctx context.Context, requesterID uuid.UUID, prefix string, limit int) ([]UserSearchResult, error)) *MockUsersRepository_SearchUsers_Call {
 	_c.Call.Return(run)
 	return _c
 }

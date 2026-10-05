@@ -2,17 +2,17 @@ package chats_transport_http
 
 import (
 	"context"
-	"messenger/internal/core/domain"
-	chats_service "messenger/internal/features/chats/service"
+	"github.com/wrzdx/Nero/internal/core/domain"
+	chats_service "github.com/wrzdx/Nero/internal/features/chats/service"
 
 	"github.com/google/uuid"
 )
 
 type ChatsService interface {
-	CreateDirect(
+	CreateDirectByUsername(
 		ctx context.Context,
 		currentUserID uuid.UUID,
-		peerID uuid.UUID,
+		peerUsername string,
 	) (domain.DirectChat, bool, error)
 
 	ListChats(
@@ -21,10 +21,10 @@ type ChatsService interface {
 		query chats_service.ListChatsQuery,
 	) (chats_service.ChatPage, error)
 
-	CreateGroup(
+	CreateGroupByUsernames(
 		ctx context.Context,
 		creatorID uuid.UUID,
-		command chats_service.CreateGroupCommand,
+		command chats_service.CreateGroupByUsernamesCommand,
 	) (domain.GroupChat, error)
 
 	ListGroupParticipants(
@@ -33,14 +33,14 @@ type ChatsService interface {
 		query chats_service.ListGroupParticipantsQuery,
 	) (chats_service.GroupParticipantPage, error)
 
-	AddGroupParticipants(
+	AddGroupParticipantsByUsernames(
 		ctx context.Context,
-		command chats_service.AddGroupParticipantsCommand,
-	) ([]chats_service.AddGroupParticipantResult, error)
+		command chats_service.AddGroupParticipantsByUsernamesCommand,
+	) ([]chats_service.UsernameParticipantResult, error)
 
-	RemoveGroupParticipant(
+	RemoveGroupParticipantByUsername(
 		ctx context.Context,
-		command chats_service.RemoveGroupParticipantCommand,
+		command chats_service.RemoveGroupParticipantByUsernameCommand,
 	) error
 
 	UpdateGroup(

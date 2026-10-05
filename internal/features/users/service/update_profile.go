@@ -3,8 +3,8 @@ package users_service
 import (
 	"context"
 	"fmt"
-	"messenger/internal/core/domain"
-	core_types "messenger/internal/core/types"
+	"github.com/wrzdx/Nero/internal/core/domain"
+	core_types "github.com/wrzdx/Nero/internal/core/types"
 
 	"github.com/google/uuid"
 )

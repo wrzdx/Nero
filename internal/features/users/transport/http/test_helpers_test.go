@@ -8,9 +8,9 @@ import (
 	"testing"
 	"time"
 
-	"messenger/internal/core/domain"
-	"messenger/internal/core/logger"
-	http_response "messenger/internal/core/transport/http/response"
+	"github.com/wrzdx/Nero/internal/core/domain"
+	"github.com/wrzdx/Nero/internal/core/logger"
+	http_response "github.com/wrzdx/Nero/internal/core/transport/http/response"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"

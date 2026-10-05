@@ -77,13 +77,13 @@ run:
 	export POSTGRES_HOST=localhost && \
 	export STATIC_DIR=./web/static && \
 	go mod tidy && \
-	go run ${PROJECT_ROOT}/cmd/messenger/main.go
+	go run ${PROJECT_ROOT}/cmd/nero/main.go
 
 dev:
 	@export LOGGER_FOLDER="${PROJECT_ROOT}/out/logs" && \
 	export POSTGRES_HOST=localhost && \
 	export STATIC_DIR="${PROJECT_ROOT}/web/static" && \
-	go tool templ generate --watch --proxy="http://localhost:5050" --cmd="go run ./cmd/messenger"
+	go tool templ generate --watch --proxy="http://localhost:5050" --cmd="go run ./cmd/nero"
 
 deploy:
 	@docker compose up -d --build messenger
@@ -101,7 +101,7 @@ env-config:
 swagger-gen:
 	@docker compose run --rm swagger \
 		init \
-		-g cmd/messenger/main.go \
+		-g cmd/nero/main.go \
 		-o docs \
 		--parseInternal \
 		--parseDependency
@@ -146,7 +146,7 @@ css-watch:
 	npx @tailwindcss/cli -i ./web/styles/input.css -o ./web/static/css/app.css --watch
 
 css-build:
-	npx @tailwindcss/cli -i ./web/styles/input.css -o ./web/static/css/app.css --minify
+	npm run css:build
 
 templ-generate:
 	go tool templ generate

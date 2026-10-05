@@ -4,10 +4,10 @@ import (
 	"bytes"
 	"context"
 	"errors"
-	"messenger/internal/core/auth"
-	"messenger/internal/core/domain"
-	auth_service "messenger/internal/features/auth/service"
-	web_views "messenger/internal/web/views"
+	"github.com/wrzdx/Nero/internal/core/auth"
+	"github.com/wrzdx/Nero/internal/core/domain"
+	auth_service "github.com/wrzdx/Nero/internal/features/auth/service"
+	web_views "github.com/wrzdx/Nero/internal/web/views"
 	"mime"
 	"net/http"
 	"strings"
@@ -39,6 +39,7 @@ type AuthHandler struct {
 	accessTTL     time.Duration
 	secure        bool
 	log           *zap.Logger
+	session       *SessionManager
 }
 
 func NewAuthHandler(service AuthService, refreshCookie RefreshCookieManager, tokens AccessTokenParser, accessTTL time.Duration, secure bool, log *zap.Logger) *AuthHandler {
@@ -50,7 +51,11 @@ func (h *AuthHandler) RegisterPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *AuthHandler) LoginPage(w http.ResponseWriter, r *http.Request) {
-	h.render(w, r, http.StatusOK, web_views.Login())
+	data := web_views.AuthFormData{}
+	if r.URL.Query().Get("changed") == "1" {
+		data.Message = "Пароль изменён. Войдите снова."
+	}
+	h.render(w, r, http.StatusOK, web_views.LoginPage(data))
 }
 
 func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
@@ -182,21 +187,27 @@ func (h *AuthHandler) serviceError(data *web_views.AuthFormData, err error) int 
 }
 
 func (h *AuthHandler) signedIn(w http.ResponseWriter, r *http.Request, tokens auth.TokenPair) {
-	h.refreshCookie.SetRefreshToken(w, tokens.Refresh)
+	if h.session != nil {
+		h.session.setCookies(w, tokens)
+	} else {
+		h.refreshCookie.SetRefreshToken(w, tokens.Refresh)
+	}
 	// The HTML UI keeps the access token in an HttpOnly cookie, never in localStorage.
 	// JSON API clients still use the existing Authorization: Bearer contract.
+	h.setAccessCookie(w, tokens.Access)
+	path := "/welcome"
+	if h.session != nil {
+		path = "/app"
+	}
+	redirectPage(w, r, path)
+}
+
+func (h *AuthHandler) setAccessCookie(w http.ResponseWriter, token string) {
 	http.SetCookie(w, &http.Cookie{
-		Name: accessCookieName, Value: tokens.Access, Path: "/", HttpOnly: true,
+		Name: accessCookieName, Value: token, Path: "/", HttpOnly: true,
 		Secure: h.secure, SameSite: http.SameSiteLaxMode,
 		MaxAge: int(h.accessTTL.Seconds()), Expires: time.Now().Add(h.accessTTL),
 	})
-	w.Header().Set("Cache-Control", "no-store")
-	if r.Header.Get("HX-Request") == "true" {
-		w.Header().Set("HX-Redirect", "/welcome")
-		w.WriteHeader(http.StatusNoContent)
-		return
-	}
-	http.Redirect(w, r, "/welcome", http.StatusSeeOther)
 }
 
 func (h *AuthHandler) form(w http.ResponseWriter, r *http.Request, status int, register bool, data web_views.AuthFormData) {

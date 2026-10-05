@@ -1,14 +1,11 @@
 package chats_transport_http
 
 import (
-	core_context "messenger/internal/core/context"
-	"messenger/internal/core/logger"
-	http_request "messenger/internal/core/transport/http/request"
-	http_response "messenger/internal/core/transport/http/response"
-	chats_service "messenger/internal/features/chats/service"
+	core_context "github.com/wrzdx/Nero/internal/core/context"
+	"github.com/wrzdx/Nero/internal/core/logger"
+	http_response "github.com/wrzdx/Nero/internal/core/transport/http/response"
+	chats_service "github.com/wrzdx/Nero/internal/features/chats/service"
 	"net/http"
-
-	"github.com/google/uuid"
 )
 
 func (h *ChatsHandler) CreateGroup(w http.ResponseWriter, r *http.Request) {
@@ -18,20 +15,21 @@ func (h *ChatsHandler) CreateGroup(w http.ResponseWriter, r *http.Request) {
 	claims := core_context.ClaimsRequired(ctx)
 
 	var request CreateGroupRequest
-	if err := http_request.DecodeAndValidateRequestBody(r, &request); err != nil {
+	if err := decodeUsernameRequest(r, &request); err != nil {
 		sender.Error(err)
 		return
 	}
-	ids := make([]uuid.UUID, 0, len(request.ParticipantIDs))
-	for _, id := range request.ParticipantIDs {
-		ids = append(ids, uuid.MustParse(id))
+	names, err := requestUsernames(request.ParticipantUsernames, "participant_usernames")
+	if err != nil {
+		sender.Error(err)
+		return
 	}
-	group, err := h.chatsService.CreateGroup(
+	group, err := h.chatsService.CreateGroupByUsernames(
 		ctx,
 		claims.UserID,
-		chats_service.CreateGroupCommand{
-			Title:          request.Title,
-			ParticipantIDs: ids,
+		chats_service.CreateGroupByUsernamesCommand{
+			Title:                request.Title,
+			ParticipantUsernames: names,
 		},
 	)
 	if err != nil {
@@ -49,6 +47,6 @@ func (h *ChatsHandler) CreateGroup(w http.ResponseWriter, r *http.Request) {
 type CreateGroupResponse GroupResponse
 
 type CreateGroupRequest struct {
-	Title          string   `json:"title" validate:"required"`
-	ParticipantIDs []string `json:"participant_ids" validate:"dive,uuid"`
+	Title                string   `json:"title" validate:"required"`
+	ParticipantUsernames []string `json:"participant_usernames"`
 }

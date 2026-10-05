@@ -9,11 +9,11 @@ import (
 	"testing"
 	"time"
 
-	core_context "messenger/internal/core/context"
-	"messenger/internal/core/domain"
-	"messenger/internal/core/logger"
-	http_response "messenger/internal/core/transport/http/response"
-	chats_service "messenger/internal/features/chats/service"
+	core_context "github.com/wrzdx/Nero/internal/core/context"
+	"github.com/wrzdx/Nero/internal/core/domain"
+	"github.com/wrzdx/Nero/internal/core/logger"
+	http_response "github.com/wrzdx/Nero/internal/core/transport/http/response"
+	chats_service "github.com/wrzdx/Nero/internal/features/chats/service"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/mock"
@@ -22,11 +22,11 @@ import (
 
 func TestCreateGroup(t *testing.T) {
 	creatorID := uuid.MustParse("00000000-0000-0000-0000-000000000001")
-	member1ID := uuid.MustParse("00000000-0000-0000-0000-000000000002")
-	member2ID := uuid.MustParse("00000000-0000-0000-0000-000000000003")
-	command := chats_service.CreateGroupCommand{
-		Title:          "Backend group",
-		ParticipantIDs: []uuid.UUID{member1ID, member2ID},
+	member1ID := "member_one"
+	member2ID := "member_two"
+	command := chats_service.CreateGroupByUsernamesCommand{
+		Title:                "Backend group",
+		ParticipantUsernames: []string{member1ID, member2ID},
 	}
 
 	t.Run("returns created group", func(t *testing.T) {
@@ -38,12 +38,12 @@ func TestCreateGroup(t *testing.T) {
 		require.NoError(t, err)
 		service := NewMockChatsService(t)
 		service.EXPECT().
-			CreateGroup(mock.Anything, creatorID, command).
+			CreateGroupByUsernames(mock.Anything, creatorID, command).
 			Return(group, nil)
 		handler := NewChatsHandler(service)
 		request := newCreateGroupRequest(t, creatorID, map[string]any{
-			"title":           command.Title,
-			"participant_ids": []uuid.UUID{member1ID, member2ID},
+			"title":                 command.Title,
+			"participant_usernames": []string{member1ID, member2ID},
 		})
 		recorder := httptest.NewRecorder()
 
@@ -58,13 +58,13 @@ func TestCreateGroup(t *testing.T) {
 		require.True(t, group.Chat.LastActivityAt.Equal(response.LastActivityAt))
 		require.True(t, group.Chat.CreatedAt.Equal(response.CreatedAt))
 		require.Equal(t, group.Title, response.Title)
-		require.NotContains(t, recorder.Body.String(), "participant_ids")
+		require.NotContains(t, recorder.Body.String(), "participant_usernames")
 	})
 
 	t.Run("rejects missing title without calling service", func(t *testing.T) {
 		handler := NewChatsHandler(NewMockChatsService(t))
 		request := newCreateGroupRequest(t, creatorID, map[string]any{
-			"participant_ids": []uuid.UUID{member1ID},
+			"participant_usernames": []string{member1ID},
 		})
 		recorder := httptest.NewRecorder()
 
@@ -83,8 +83,8 @@ func TestCreateGroup(t *testing.T) {
 	t.Run("rejects malformed participant id without calling service", func(t *testing.T) {
 		handler := NewChatsHandler(NewMockChatsService(t))
 		request := newCreateGroupRequest(t, creatorID, map[string]any{
-			"title":           command.Title,
-			"participant_ids": []string{member1ID.String(), "not-a-uuid"},
+			"title":                 command.Title,
+			"participant_usernames": []string{member1ID, "not-a-uuid"},
 		})
 		recorder := httptest.NewRecorder()
 
@@ -95,7 +95,7 @@ func TestCreateGroup(t *testing.T) {
 			Code:    "invalid_request",
 			Message: "invalid request",
 			Fields: map[string]string{
-				"participant_ids[1]": "invalid uuid",
+				"participant_usernames[1]": "must contain 5–32 ASCII letters, digits or underscores",
 			},
 		}, decodeChatsTransportError(t, recorder))
 	})
@@ -120,7 +120,7 @@ func TestCreateGroup(t *testing.T) {
 	t.Run("returns detailed invalid group error", func(t *testing.T) {
 		service := NewMockChatsService(t)
 		service.EXPECT().
-			CreateGroup(mock.Anything, creatorID, command).
+			CreateGroupByUsernames(mock.Anything, creatorID, command).
 			Return(domain.GroupChat{}, domain.DetailedError{
 				Err: domain.ErrInvalidGroupChat,
 				Details: map[string]string{
@@ -129,8 +129,8 @@ func TestCreateGroup(t *testing.T) {
 			})
 		handler := NewChatsHandler(service)
 		request := newCreateGroupRequest(t, creatorID, map[string]any{
-			"title":           command.Title,
-			"participant_ids": []uuid.UUID{member1ID, member2ID},
+			"title":                 command.Title,
+			"participant_usernames": []string{member1ID, member2ID},
 		})
 		recorder := httptest.NewRecorder()
 
@@ -150,12 +150,12 @@ func TestCreateGroup(t *testing.T) {
 		serviceErr := errors.New("database unavailable")
 		service := NewMockChatsService(t)
 		service.EXPECT().
-			CreateGroup(mock.Anything, creatorID, command).
+			CreateGroupByUsernames(mock.Anything, creatorID, command).
 			Return(domain.GroupChat{}, serviceErr)
 		handler := NewChatsHandler(service)
 		request := newCreateGroupRequest(t, creatorID, map[string]any{
-			"title":           command.Title,
-			"participant_ids": []uuid.UUID{member1ID, member2ID},
+			"title":                 command.Title,
+			"participant_usernames": []string{member1ID, member2ID},
 		})
 		recorder := httptest.NewRecorder()
 

@@ -8,10 +8,10 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"messenger/internal/core/domain"
-	"messenger/internal/core/logger"
-	http_response "messenger/internal/core/transport/http/response"
-	chats_service "messenger/internal/features/chats/service"
+	"github.com/wrzdx/Nero/internal/core/domain"
+	"github.com/wrzdx/Nero/internal/core/logger"
+	http_response "github.com/wrzdx/Nero/internal/core/transport/http/response"
+	chats_service "github.com/wrzdx/Nero/internal/features/chats/service"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/mock"
@@ -21,21 +21,21 @@ import (
 func TestRemoveGroupParticipant(t *testing.T) {
 	requesterID := uuid.MustParse("00000000-0000-0000-0000-000000000001")
 	groupID := uuid.MustParse("00000000-0000-0000-0000-000000000002")
-	targetID := uuid.MustParse("00000000-0000-0000-0000-000000000003")
-	command := chats_service.RemoveGroupParticipantCommand{
-		GroupID: groupID, RequesterID: requesterID, TargetID: targetID,
+	targetID := "target_user"
+	command := chats_service.RemoveGroupParticipantByUsernameCommand{
+		GroupID: groupID, RequesterID: requesterID, TargetUsername: targetID,
 	}
 
 	t.Run("removes participant through registered route", func(t *testing.T) {
 		service := NewMockChatsService(t)
-		service.EXPECT().RemoveGroupParticipant(mock.Anything, command).Return(nil)
+		service.EXPECT().RemoveGroupParticipantByUsername(mock.Anything, command).Return(nil)
 		router := newListChatsTransportRouter(service, requesterID)
 		recorder := httptest.NewRecorder()
 
 		router.ServeHTTP(recorder, newRemoveGroupParticipantHTTPRequest(
 			t,
 			groupID.String(),
-			map[string]any{"target_id": targetID},
+			map[string]any{"target_username": targetID},
 		))
 
 		require.Equal(t, http.StatusNoContent, recorder.Code)
@@ -49,7 +49,7 @@ func TestRemoveGroupParticipant(t *testing.T) {
 		router.ServeHTTP(recorder, newRemoveGroupParticipantHTTPRequest(
 			t,
 			"not-a-uuid",
-			map[string]any{"target_id": targetID},
+			map[string]any{"target_username": targetID},
 		))
 
 		require.Equal(t, http.StatusBadRequest, recorder.Code)
@@ -66,13 +66,13 @@ func TestRemoveGroupParticipant(t *testing.T) {
 		router.ServeHTTP(recorder, newRemoveGroupParticipantHTTPRequest(
 			t,
 			groupID.String(),
-			map[string]any{"target_id": "not-a-uuid"},
+			map[string]any{"target_username": "not-a-uuid"},
 		))
 
 		require.Equal(t, http.StatusBadRequest, recorder.Code)
 		require.Equal(t, http_response.APIErrorDetail{
 			Code: "invalid_request", Message: "invalid request",
-			Fields: map[string]string{"target_id": "invalid uuid"},
+			Fields: map[string]string{"target_username": "must contain 5–32 ASCII letters, digits or underscores"},
 		}, decodeChatsTransportError(t, recorder))
 	})
 
@@ -108,14 +108,14 @@ func TestRemoveGroupParticipant(t *testing.T) {
 	for _, testCase := range errorCases {
 		t.Run(testCase.name, func(t *testing.T) {
 			service := NewMockChatsService(t)
-			service.EXPECT().RemoveGroupParticipant(mock.Anything, command).Return(testCase.serviceErr)
+			service.EXPECT().RemoveGroupParticipantByUsername(mock.Anything, command).Return(testCase.serviceErr)
 			router := newListChatsTransportRouter(service, requesterID)
 			recorder := httptest.NewRecorder()
 
 			router.ServeHTTP(recorder, newRemoveGroupParticipantHTTPRequest(
 				t,
 				groupID.String(),
-				map[string]any{"target_id": targetID},
+				map[string]any{"target_username": targetID},
 			))
 
 			require.Equal(t, testCase.status, recorder.Code)
@@ -126,14 +126,14 @@ func TestRemoveGroupParticipant(t *testing.T) {
 	t.Run("does not expose unexpected service error", func(t *testing.T) {
 		serviceErr := errors.New("database unavailable")
 		service := NewMockChatsService(t)
-		service.EXPECT().RemoveGroupParticipant(mock.Anything, command).Return(serviceErr)
+		service.EXPECT().RemoveGroupParticipantByUsername(mock.Anything, command).Return(serviceErr)
 		router := newListChatsTransportRouter(service, requesterID)
 		recorder := httptest.NewRecorder()
 
 		router.ServeHTTP(recorder, newRemoveGroupParticipantHTTPRequest(
 			t,
 			groupID.String(),
-			map[string]any{"target_id": targetID},
+			map[string]any{"target_username": targetID},
 		))
 
 		require.Equal(t, http.StatusInternalServerError, recorder.Code)

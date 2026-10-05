@@ -6,9 +6,9 @@ package auth_transport_http
 
 import (
 	"context"
-	"messenger/internal/core/auth"
-	"messenger/internal/core/domain"
-	"messenger/internal/features/auth/service"
+	"github.com/wrzdx/Nero/internal/core/auth"
+	"github.com/wrzdx/Nero/internal/core/domain"
+	"github.com/wrzdx/Nero/internal/features/auth/service"
 	"net/http"
 
 	"github.com/google/uuid"

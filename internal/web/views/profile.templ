@@ -1,0 +1,253 @@
+package web_views
+
+import "strconv"
+
+templ ProfilePage(app AppData, data ProfileData) {
+	@Layout("Профиль — Nero") {
+		@ProfileRoot(app, data)
+	}
+}
+
+templ ProfileRoot(app AppData, data ProfileData) {
+	@AppRoot(app) {
+		<main class="settings-screen profile-screen page-enter">
+			@ScreenHeader("Профиль", "Настройки аккаунта")
+			<div class="settings-content profile-content">
+				<aside class="profile-overview">
+					<p class="eyebrow">Твой аккаунт</p>
+					<div class="profile-person"><span class="avatar avatar-large">{ data.Person.Initials }</span><div><h2>{ data.Person.Name }</h2><p>{ "@" + data.Person.Username }</p></div></div>
+					<nav class="account-actions" aria-label="Настройки аккаунта">
+						<a href="/app/password" hx-get="/app/password" hx-target="#app-root" hx-swap="outerHTML transition:true" hx-push-url="true"><span>Изменить пароль</span>@Icon("arrow")</a>
+						<a href="/app/account/delete" class="danger-text" hx-get="/app/account/delete" hx-target="#app-root" hx-swap="outerHTML transition:true" hx-push-url="true"><span>Удалить аккаунт</span>@Icon("arrow")</a>
+					</nav>
+					<form method="post" action="/logout" class="profile-logout"><button type="submit" class="button-secondary">@Icon("logout") Выйти</button></form>
+				</aside>
+				<div class="profile-editor"><div class="profile-section-heading"><h2>Личные данные</h2><p>Имя и описание в твоём профиле.</p></div>@ProfileForm(data)</div>
+			</div>
+		</main>
+	}
+}
+
+templ ProfileForm(data ProfileData) {
+	<section id="profile-form">
+		if data.Saved {
+			<p class="saved-notice" role="status">
+				@Icon("check") Профиль сохранён.
+			</p>
+		} else {
+			@FormMessage(data.Message)
+		}
+		<form method="post" action="/app/profile" hx-post="/app/profile" hx-target="#app-root" hx-swap="outerHTML" hx-sync="this:drop" class="settings-form">
+			@ProfileInput("username", "Имя пользователя", data.Person.Username, "username", data.Errors["username"], 32, true)
+			<div class="form-columns">
+				@ProfileInput("first_name", "Имя", data.Person.FirstName, "given-name", data.Errors["first_name"], 64, true)
+				@ProfileInput("last_name", "Фамилия", data.Person.LastName, "family-name", data.Errors["last_name"], 64, false)
+			</div>
+			<div class="form-field">
+				<label for="bio">О себе</label><textarea id="bio" name="bio" rows="3" maxlength="70" class="auth-input profile-bio-input" aria-describedby="bio-hint">{ data.Person.Bio }</textarea>
+				@FieldHint("bio", "До 70 символов.", data.Errors["bio"])
+			</div>
+			<div class="form-actions">
+				<a href="/app" class="button-secondary" hx-get="/app" hx-target="#app-root" hx-swap="outerHTML transition:true" hx-push-url="true">Отмена</a>
+				<button type="submit" class="button-primary">
+					Сохранить @Icon("check")
+				</button>
+			</div>
+		</form>
+	</section>
+}
+
+templ ProfileInput(name string, label string, value string, autocomplete string, errorMessage string, max int, required bool) {
+	<div class="form-field">
+		<label for={ name }>{ label }</label><input
+	id={ name }
+	name={ name }
+	value={ value }
+	autocomplete={ autocomplete }
+	maxlength={ strconv.Itoa(max) }
+	required?={ required }
+	class="auth-input"
+	aria-invalid={ strconv.FormatBool(errorMessage != "") }
+	if errorMessage != "" {
+		aria-describedby={ name + "-hint" }
+	}
+/>
+		@FieldHint(name, "", errorMessage)
+	</div>
+}
+
+templ UserPage(app AppData, person Person) {
+	@Layout(person.Name + " — Nero") {
+		@UserRoot(app, person)
+	}
+}
+
+templ UserRoot(app AppData, person Person) {
+	@AppRoot(app) {
+		<main class="settings-screen page-enter">
+			@ScreenHeader("Собеседник", "Профиль")
+			<div class="settings-content">
+				<div class="profile-person"><span class="avatar avatar-large">{ person.Initials }</span><div><h2>{ person.Name }</h2><p>{ "@" + person.Username }</p></div></div>
+				if person.Bio != "" {
+					<p class="profile-bio">{ person.Bio }</p>
+				}
+				<form method="post" action="/app/new">
+					<input type="hidden" name="type" value="direct"/><input type="hidden" name="peer_username" value={ person.Username }/>
+					<button type="submit" class="button-primary">
+						Написать @Icon("arrow")
+					</button>
+				</form>
+			</div>
+		</main>
+	}
+}
+
+templ NewChatPage(app AppData, group bool, message string, title string, usernames string) {
+	@Layout("Новый разговор — Nero") {
+		@NewChatRoot(app, group, message, title, usernames)
+	}
+}
+
+templ NewChatRoot(app AppData, group bool, message string, title string, usernames string) {
+	@AppRoot(app) {
+		<main class="settings-screen page-enter">
+			@ScreenHeader("Новый разговор", "Личный чат или группа")
+			<div class="settings-content">
+				<div class="segmented-tabs"><a href="/app/new" class={ templ.KV("selected", !group) } hx-get="/app/new" hx-target="#app-root" hx-swap="outerHTML" hx-push-url="true">Личный</a><a href="/app/new?type=group" class={ templ.KV("selected", group) } hx-get="/app/new?type=group" hx-target="#app-root" hx-swap="outerHTML" hx-push-url="true">Группа</a></div>
+				@FormMessage(message)
+				<form method="post" action="/app/new" class="settings-form">
+					if group {
+						<input type="hidden" name="type" value="group"/>
+						@ProfileInput("title", "Название группы", title, "off", "", 128, true)
+						@ParticipantPicker("group-user-search", true, false, PickerNames(usernames), []string{ app.Me.Username })
+						<p class="field-hint">Можно создать группу и пригласить участников позже.</p>
+					} else {
+						<input type="hidden" name="type" value="direct"/>
+						@ParticipantPicker("direct-user-search", false, true, PickerNames(usernames), []string{ app.Me.Username })
+					}
+					<div class="form-actions">
+						<a href="/app" class="button-secondary">Отмена</a>
+						<button type="submit" class="button-primary">
+							Создать @Icon("arrow")
+						</button>
+					</div>
+				</form>
+			</div>
+		</main>
+	}
+}
+
+templ PasswordPage(app AppData, message string) {
+	@Layout("Пароль — Nero") {
+		@PasswordRoot(app, message)
+	}
+}
+
+templ PasswordRoot(app AppData, message string) {
+	@AppRoot(app) {
+		<main class="settings-screen page-enter">
+			@ScreenHeader("Изменить пароль", "После изменения потребуется войти снова")
+			<div class="settings-content">
+				@FormMessage(message)
+				<form method="post" action="/app/password" class="settings-form">
+					@SettingsPassword("current_password", "Текущий пароль", "current-password", 1)
+					@SettingsPassword("new_password", "Новый пароль", "new-password", 15)
+					@SettingsPassword("confirm_password", "Повторить новый пароль", "new-password", 15)
+					<p class="field-hint">От 15 символов, не более 72 байт.</p>
+					<div class="form-actions"><a href="/app/profile" class="button-secondary">Отмена</a><button type="submit" class="button-primary">Изменить</button></div>
+				</form>
+			</div>
+		</main>
+	}
+}
+
+templ SettingsPassword(name string, label string, autocomplete string, min int) {
+	<div class="form-field"><label for={ name }>{ label }</label><div class="relative"><input id={ name } name={ name } type="password" autocomplete={ autocomplete } minlength={ strconv.Itoa(min) } required class="auth-input pr-12"/><button type="button" data-password-toggle aria-controls={ name } aria-label="Показать пароль" aria-pressed="false" class="icon-button absolute inset-y-0 right-0"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"></path><circle cx="12" cy="12" r="3"></circle><path data-eye-slash d="m3 3 18 18" class="hidden"></path></svg></button></div></div>
+}
+
+templ DeleteAccountPage(app AppData, message string) {
+	@Layout("Удалить аккаунт — Nero") {
+		@DeleteAccountRoot(app, message)
+	}
+}
+
+templ DeleteAccountRoot(app AppData, message string) {
+	@AppRoot(app) {
+		<main class="settings-screen page-enter">
+			@ScreenHeader("Удалить аккаунт", "Это действие нельзя отменить")
+			<div class="settings-content">
+				@FormMessage(message)
+				<p class="profile-bio">Аккаунт будет удалён. Уже отправленные сообщения останутся в разговорах.</p>
+				<form method="post" action="/app/account/delete" class="settings-form">
+					<div class="form-field"><label for="confirm_username">Введи свой username для подтверждения</label><input id="confirm_username" name="confirm_username" class="auth-input" autocomplete="off" required/></div>
+					<div class="form-actions">
+						<a href="/app/profile" class="button-secondary">Отмена</a>
+						<button type="submit" class="button-danger">
+							Удалить аккаунт @Icon("trash")
+						</button>
+					</div>
+				</form>
+			</div>
+		</main>
+	}
+}
+
+templ GroupPage(app AppData, data GroupData) {
+	@Layout(data.Title + " — Nero") {
+		@GroupRoot(app, data)
+	}
+}
+
+templ GroupRoot(app AppData, data GroupData) {
+	@AppRoot(app) {
+		<main class="settings-screen page-enter">
+			@ScreenHeader("О группе", data.Title)
+			<div class="settings-content">
+				@FormMessage(data.Message)
+				if data.Manage {
+					<form method="post" action={ "/app/groups/" + data.ID + "/title" } class="settings-form mb-8">
+						@ProfileInput("title", "Название группы", data.Title, "off", "", 128, true)
+						<button type="submit" class="button-secondary self-end">Сохранить</button>
+					</form>
+				}
+				<p class="eyebrow mb-4">Участники</p>
+				<div class="group-members">
+					@GroupMembers(data.Members, data.ID)
+				</div>
+				if data.MoreURL != "" {
+					<a href={ templ.SafeURL(data.MoreURL) } class="load-more">Ещё участники</a>
+				}
+				if data.Manage {
+					<form method="post" action={ "/app/groups/" + data.ID + "/add" } class="settings-form mt-8">
+						@ParticipantPicker("add-user-search", true, true, data.PendingUsernames, GroupUsernames(data.Members))
+						<button type="submit" class="button-secondary self-end">
+							Добавить @Icon("plus")
+						</button>
+					</form>
+				}
+				<div class="profile-links">
+					<a href={ templ.SafeURL("/app/chats/" + data.ID) }>К разговору</a>
+					if data.CanLeave {
+						<form method="post" action={ "/app/groups/" + data.ID + "/remove" } data-confirm="Выйти из группы?"><input type="hidden" name="user_id" value={ app.Me.ID }/><button class="danger-text" type="submit">Выйти из группы</button></form>
+					}
+				</div>
+			</div>
+		</main>
+	}
+}
+
+templ GroupMembers(members []GroupMember, groupID string) {
+	for _, member := range members {
+		<div class="group-member">
+			<a href={ templ.SafeURL("/app/users/" + member.ID) } class="member-person"><span class="avatar">{ member.Initials }</span><span>{ member.Name }<small>{ "@" + member.Username + " · " + member.Role }</small></span></a>
+			if member.CanRemove {
+				<form method="post" action={ "/app/groups/" + groupID + "/remove" } data-confirm="Убрать участника из группы?">
+					<input type="hidden" name="user_id" value={ member.ID }/>
+					<button type="submit" class="icon-button danger-text" aria-label="Убрать участника">
+						@Icon("close")
+					</button>
+				</form>
+			}
+		</div>
+	}
+}

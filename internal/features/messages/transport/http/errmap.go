@@ -2,10 +2,10 @@ package messages_transport_http
 
 import (
 	"errors"
-	"messenger/internal/core/domain"
-	http_errmap "messenger/internal/core/transport/http/errmap"
-	http_response "messenger/internal/core/transport/http/response"
-	messages_service "messenger/internal/features/messages/service"
+	"github.com/wrzdx/Nero/internal/core/domain"
+	http_errmap "github.com/wrzdx/Nero/internal/core/transport/http/errmap"
+	http_response "github.com/wrzdx/Nero/internal/core/transport/http/response"
+	messages_service "github.com/wrzdx/Nero/internal/features/messages/service"
 	"net/http"
 )
 

@@ -9,10 +9,10 @@ import (
 	"testing"
 	"time"
 
-	core_context "messenger/internal/core/context"
-	"messenger/internal/core/domain"
-	"messenger/internal/core/logger"
-	http_response "messenger/internal/core/transport/http/response"
+	core_context "github.com/wrzdx/Nero/internal/core/context"
+	"github.com/wrzdx/Nero/internal/core/domain"
+	"github.com/wrzdx/Nero/internal/core/logger"
+	http_response "github.com/wrzdx/Nero/internal/core/transport/http/response"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/mock"
@@ -27,11 +27,11 @@ func TestCreateDirect(t *testing.T) {
 		direct := newChatsTransportDirect(t, currentUserID, peerID)
 		service := NewMockChatsService(t)
 		service.EXPECT().
-			CreateDirect(mock.Anything, currentUserID, peerID).
+			CreateDirectByUsername(mock.Anything, currentUserID, "peer_user").
 			Return(direct, true, nil)
 		handler := NewChatsHandler(service)
 		request := newCreateDirectRequest(t, currentUserID, map[string]any{
-			"peer_id": peerID,
+			"peer_username": "peer_user",
 		})
 		recorder := httptest.NewRecorder()
 
@@ -43,7 +43,7 @@ func TestCreateDirect(t *testing.T) {
 		require.Equal(t, direct.Chat.LastMessageID, response.LastMessageID)
 		require.True(t, direct.Chat.LastActivityAt.Equal(response.LastActivityAt))
 		require.True(t, direct.Chat.CreatedAt.Equal(response.CreatedAt))
-		require.NotContains(t, recorder.Body.String(), "peer_id")
+		require.NotContains(t, recorder.Body.String(), "peer_username")
 	})
 
 	t.Run("returns existing direct chat with OK status", func(t *testing.T) {
@@ -53,11 +53,11 @@ func TestCreateDirect(t *testing.T) {
 		direct.Chat.LastActivityAt = direct.Chat.CreatedAt.Add(time.Minute)
 		service := NewMockChatsService(t)
 		service.EXPECT().
-			CreateDirect(mock.Anything, currentUserID, peerID).
+			CreateDirectByUsername(mock.Anything, currentUserID, "peer_user").
 			Return(direct, false, nil)
 		handler := NewChatsHandler(service)
 		request := newCreateDirectRequest(t, currentUserID, map[string]any{
-			"peer_id": peerID,
+			"peer_username": "peer_user",
 		})
 		recorder := httptest.NewRecorder()
 
@@ -82,7 +82,7 @@ func TestCreateDirect(t *testing.T) {
 			Code:    "invalid_request",
 			Message: "invalid request",
 			Fields: map[string]string{
-				"peer_id": "peer_id is required",
+				"peer_username": "peer_username is required",
 			},
 		}, decodeChatsTransportError(t, recorder))
 	})
@@ -90,7 +90,7 @@ func TestCreateDirect(t *testing.T) {
 	t.Run("rejects malformed peer id without calling service", func(t *testing.T) {
 		handler := NewChatsHandler(NewMockChatsService(t))
 		request := newCreateDirectRequest(t, currentUserID, map[string]any{
-			"peer_id": "not-a-uuid",
+			"peer_username": "not-a-uuid",
 		})
 		recorder := httptest.NewRecorder()
 
@@ -101,7 +101,7 @@ func TestCreateDirect(t *testing.T) {
 			Code:    "invalid_request",
 			Message: "invalid request",
 			Fields: map[string]string{
-				"peer_id": "invalid uuid",
+				"peer_username": "must contain 5–32 ASCII letters, digits or underscores",
 			},
 		}, decodeChatsTransportError(t, recorder))
 	})
@@ -109,11 +109,11 @@ func TestCreateDirect(t *testing.T) {
 	t.Run("returns peer not found", func(t *testing.T) {
 		service := NewMockChatsService(t)
 		service.EXPECT().
-			CreateDirect(mock.Anything, currentUserID, peerID).
+			CreateDirectByUsername(mock.Anything, currentUserID, "peer_user").
 			Return(domain.DirectChat{}, false, domain.ErrNotFound)
 		handler := NewChatsHandler(service)
 		request := newCreateDirectRequest(t, currentUserID, map[string]any{
-			"peer_id": peerID,
+			"peer_username": "peer_user",
 		})
 		recorder := httptest.NewRecorder()
 
@@ -129,11 +129,11 @@ func TestCreateDirect(t *testing.T) {
 	t.Run("returns invalid direct chat", func(t *testing.T) {
 		service := NewMockChatsService(t)
 		service.EXPECT().
-			CreateDirect(mock.Anything, currentUserID, currentUserID).
+			CreateDirectByUsername(mock.Anything, currentUserID, "current_user").
 			Return(domain.DirectChat{}, false, domain.ErrInvalidDirectChat)
 		handler := NewChatsHandler(service)
 		request := newCreateDirectRequest(t, currentUserID, map[string]any{
-			"peer_id": currentUserID,
+			"peer_username": "current_user",
 		})
 		recorder := httptest.NewRecorder()
 
@@ -150,11 +150,11 @@ func TestCreateDirect(t *testing.T) {
 		serviceErr := errors.New("database unavailable")
 		service := NewMockChatsService(t)
 		service.EXPECT().
-			CreateDirect(mock.Anything, currentUserID, peerID).
+			CreateDirectByUsername(mock.Anything, currentUserID, "peer_user").
 			Return(domain.DirectChat{}, false, serviceErr)
 		handler := NewChatsHandler(service)
 		request := newCreateDirectRequest(t, currentUserID, map[string]any{
-			"peer_id": peerID,
+			"peer_username": "peer_user",
 		})
 		recorder := httptest.NewRecorder()
 

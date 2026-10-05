@@ -5,7 +5,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	http_middleware "messenger/internal/core/transport/http/middleware"
+	http_middleware "github.com/wrzdx/Nero/internal/core/transport/http/middleware"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"

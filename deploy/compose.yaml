@@ -2,7 +2,7 @@ name: messenger
 
 services:
   app:
-    image: messenger:${RELEASE_ID:?required}
+    image: nero:${RELEASE_ID:?required}
     build:
       context: .
       dockerfile: Dockerfile
@@ -12,6 +12,7 @@ services:
       HTTP_ALLOWED_ORIGINS: ${APP_ORIGIN:?required}
       ENVIRONMENT: production
       TIME_ZONE: UTC
+      STATIC_DIR: /app/web/static
       AUTH_ACCESS_TOKEN_TTL: 15m
       AUTH_SESSION_TTL: 24h
       JWT_SECRET: ${JWT_SECRET:?required}

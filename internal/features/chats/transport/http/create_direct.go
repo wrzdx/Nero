@@ -1,13 +1,10 @@
 package chats_transport_http
 
 import (
-	core_context "messenger/internal/core/context"
-	"messenger/internal/core/logger"
-	http_request "messenger/internal/core/transport/http/request"
-	http_response "messenger/internal/core/transport/http/response"
+	core_context "github.com/wrzdx/Nero/internal/core/context"
+	"github.com/wrzdx/Nero/internal/core/logger"
+	http_response "github.com/wrzdx/Nero/internal/core/transport/http/response"
 	"net/http"
-
-	"github.com/google/uuid"
 )
 
 func (h *ChatsHandler) CreateDirect(w http.ResponseWriter, r *http.Request) {
@@ -17,15 +14,20 @@ func (h *ChatsHandler) CreateDirect(w http.ResponseWriter, r *http.Request) {
 	claims := core_context.ClaimsRequired(ctx)
 
 	var request CreateDirectRequest
-	if err := http_request.DecodeAndValidateRequestBody(r, &request); err != nil {
+	if err := decodeUsernameRequest(r, &request); err != nil {
 		sender.Error(err)
 		return
 	}
 
-	direct, isCreated, err := h.chatsService.CreateDirect(
+	username, err := requestUsername(request.PeerUsername, "peer_username")
+	if err != nil {
+		sender.Error(err)
+		return
+	}
+	direct, isCreated, err := h.chatsService.CreateDirectByUsername(
 		ctx,
 		claims.UserID,
-		uuid.MustParse(request.PeerID),
+		username,
 	)
 	if err != nil {
 		sender.Error(err)
@@ -40,7 +42,7 @@ func (h *ChatsHandler) CreateDirect(w http.ResponseWriter, r *http.Request) {
 }
 
 type CreateDirectRequest struct {
-	PeerID string `json:"peer_id" validate:"required,uuid"`
+	PeerUsername string `json:"peer_username" validate:"required"`
 }
 
 type CreateDirectResponse ChatResponse

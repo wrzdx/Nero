@@ -1,7 +1,7 @@
 package chats_transport_http
 
 import (
-	http_middleware "messenger/internal/core/transport/http/middleware"
+	http_middleware "github.com/wrzdx/Nero/internal/core/transport/http/middleware"
 
 	"github.com/go-chi/chi/v5"
 )

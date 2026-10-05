@@ -4,7 +4,7 @@
 
 ## Local setup
 
-Use Go 1.26.4 (see `go.mod`), Docker with Compose, GNU Make, and a
+Use Go 1.26.4 (see `go.mod`), Node.js/npm, Docker with Compose, GNU Make, and a
 POSIX-compatible shell. On Windows, run Make targets from Git Bash: several
 recipes use `export`, shell conditionals, and line continuations.
 
@@ -19,6 +19,8 @@ do not deploy the example `JWT_SECRET` or database password. Do not commit `.env
 make env-up
 make env-port-forward
 make migrate-up
+npm ci
+npm run build:ui
 make run
 ```
 
@@ -27,7 +29,7 @@ The port forwarder exposes PostgreSQL on `127.0.0.1:5432`. `make run` sets
 `POSTGRES_HOST=localhost`, loads the Makefile environment, runs `go mod tidy`,
 and starts the application. It can therefore update module files.
 
-The application does not load `.env` itself. When running `go run ./cmd/messenger`
+The application does not load `.env` itself. When running `go run ./cmd/nero`
 directly, export the configuration into the process environment first.
 
 ## Configuration
@@ -42,6 +44,7 @@ directly, export the configuration into the process environment first.
 | `AUTH_SESSION_TTL` | Session lifetime; `.env.example` sets `1h` |
 | `ENVIRONMENT` | `development`; production enables Secure refresh cookies |
 | `TIME_ZONE` | `Europe/Moscow` in the example; application default is UTC |
+| `STATIC_DIR` | Static UI files; defaults to `./web/static` |
 | `POSTGRES_HOST` | Required; Make sets localhost for local runs/tests |
 | `POSTGRES_PORT` | Defaults to `5432` |
 | `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB` | Database credentials and name |
@@ -52,15 +55,17 @@ directly, export the configuration into the process environment first.
 HTTP CORS configuration is not a WebSocket origin allowlist. The WebSocket
 handler uses the library's default same-origin acceptance policy.
 
-### Application container limitation
+### Local application container
 
-`make deploy` exists, but the current `messenger` Compose service does not forward
-`JWT_SECRET`, `AUTH_ACCESS_TOKEN_TTL`, `AUTH_SESSION_TTL`, `ENVIRONMENT`, or
-`TIME_ZONE` to the application. In particular, the missing required `JWT_SECRET`
-prevents a normal startup. A Compose `.env` file is not automatically injected
-into a container's environment. Use the local-run path above until the container
-configuration is completed. Migrations are also a separate step, not an
-application startup action.
+`make deploy` starts the local `messenger` Compose service. It explicitly uses
+`env_file: .env`, so the required JWT secret and other configuration reach the
+container. The image builds Tailwind CSS, asset hashes, templ views and Go;
+the runtime includes the static files. PostgreSQL and migrations remain separate
+steps. The target does not deploy to the remote server.
+
+For remote releases use the [deployment guide](deployment.md). The production
+image consumes a prebuilt Linux binary plus `web/static`; it does not compile Go
+or run Node on the VPS.
 
 ## Tests
 
@@ -105,6 +110,12 @@ process. It is a build cache, not application output or part of the database.
 
 ## Generated files
 
+Build the UI with `npm run build:ui` after changing templates, styles or browser
+scripts. `*_templ.go`, `web/static/css/app.css` and `assets_generated.go` are
+generated outputs. The last file holds content hashes used in CSS/JS URLs;
+`make css-build` also refreshes it. See [frontend notes](frontend.md) for watch
+mode, page routes, authentication and realtime behavior.
+
 Mocks are generated with Mockery (the project has used v3.7.1):
 
 ```sh
@@ -135,6 +146,6 @@ complete OpenAPI document or Swagger UI to treat as the contract.
 - Execute the integration suite, not just compilation.
 - Exercise registration, two accounts, direct/group messaging, read state, and
   socket reconnects through the running application's actual middleware stack.
-- Complete container configuration and check startup and graceful shutdown.
+- Check the release's container startup and graceful shutdown.
 - Define TLS, secret handling, rate limits, monitoring, and backup/restore for
   the target environment. These are not provided by a successful unit test run.

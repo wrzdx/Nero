@@ -7,11 +7,11 @@ import (
 	"strings"
 	"testing"
 
-	core_context "messenger/internal/core/context"
-	"messenger/internal/core/domain"
-	"messenger/internal/core/logger"
-	core_types "messenger/internal/core/types"
-	users_service "messenger/internal/features/users/service"
+	core_context "github.com/wrzdx/Nero/internal/core/context"
+	"github.com/wrzdx/Nero/internal/core/domain"
+	"github.com/wrzdx/Nero/internal/core/logger"
+	core_types "github.com/wrzdx/Nero/internal/core/types"
+	users_service "github.com/wrzdx/Nero/internal/features/users/service"
 
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"

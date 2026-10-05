@@ -1,0 +1,50 @@
+package web_views
+
+import (
+	"strconv"
+	"strings"
+)
+
+// Retain submitted names on validation errors without another database lookup.
+func PickerNames(raw string) []string {
+	return strings.FieldsFunc(raw, func(c rune) bool { return c == ',' || c == ';' || c == '\n' || c == '\r' || c == ' ' || c == '\t' })
+}
+
+templ ParticipantPicker(id string, multiple bool, required bool, names []string, excluded []string) {
+	<div class="participant-picker" data-user-picker data-multiple={ strconv.FormatBool(multiple) } data-required={ strconv.FormatBool(required) } data-excluded={ strings.Join(excluded, ",") }>
+		<label for={ id } class="picker-label">
+			if multiple {
+				Участники
+			} else {
+				Собеседник
+			}
+		</label>
+		<div class="picker-selected" data-picker-selected>
+			for _, name := range names {
+				<span class="participant-chip" data-selected-username={ strings.TrimPrefix(name, "@") }>
+					<span class="chip-avatar">{ PickerInitials(name) }</span>
+					<span>{ "@" + strings.TrimPrefix(name, "@") }</span>
+					<button type="button" data-remove-participant aria-label={ "Убрать " + name }>@Icon("close")</button>
+					<input type="hidden" name={ PickerField(multiple) } value={ strings.TrimPrefix(name, "@") }/>
+				</span>
+			}
+		</div>
+		<div class="picker-search">
+			@Icon("search")
+			<input id={ id } type="search" name={ PickerField(multiple) } data-picker-query autocomplete="off" spellcheck="false" maxlength="33" placeholder="Найти по username" aria-describedby={ id + "-hint" } aria-controls={ id + "-results" } aria-expanded="false" required?={ required && len(names) == 0 }/>
+		</div>
+		<p id={ id + "-hint" } class="field-hint" data-picker-status role="status" aria-live="polite">Введи хотя бы 2 символа username.</p>
+		<div id={ id + "-results" } class="picker-results" data-picker-results hidden></div>
+		<noscript><p class="field-hint">Введи полный username. Для нескольких участников включи JavaScript.</p></noscript>
+	</div>
+}
+
+func PickerField(multiple bool) string {
+	if multiple { return "participant_username" }
+	return "peer_username"
+}
+
+func PickerInitials(name string) string {
+	chars := []rune(strings.TrimPrefix(name, "@"))
+	return strings.ToUpper(string(chars[:min(2, len(chars))]))
+}

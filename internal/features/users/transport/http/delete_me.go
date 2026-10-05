@@ -1,9 +1,9 @@
 package users_transport_http
 
 import (
-	core_context "messenger/internal/core/context"
-	"messenger/internal/core/logger"
-	http_response "messenger/internal/core/transport/http/response"
+	core_context "github.com/wrzdx/Nero/internal/core/context"
+	"github.com/wrzdx/Nero/internal/core/logger"
+	http_response "github.com/wrzdx/Nero/internal/core/transport/http/response"
 	"net/http"
 )
 

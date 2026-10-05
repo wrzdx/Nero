@@ -2,8 +2,8 @@ package http_errmap
 
 import (
 	"errors"
-	http_request "messenger/internal/core/transport/http/request"
-	http_response "messenger/internal/core/transport/http/response"
+	http_request "github.com/wrzdx/Nero/internal/core/transport/http/request"
+	http_response "github.com/wrzdx/Nero/internal/core/transport/http/response"
 	"net/http"
 )
 

@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"messenger/internal/core/domain"
+	"github.com/wrzdx/Nero/internal/core/domain"
 	"time"
 
 	"github.com/google/uuid"
@@ -128,6 +128,7 @@ func (q ListGroupParticipantsQuery) validate() error {
 
 type ParticipantInfo struct {
 	ID        uuid.UUID
+	Username  string
 	FirstName string
 	LastName  *string
 	Role      string
@@ -162,6 +163,7 @@ func NewParticipantInfo(
 	}
 	info := ParticipantInfo{
 		ID:        gparticipant.UserID,
+		Username:  profile.Username,
 		FirstName: profile.FirstName,
 		LastName:  profile.LastName,
 		Role:      string(gparticipant.Role()),

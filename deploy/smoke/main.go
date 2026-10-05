@@ -5,11 +5,15 @@ package main
 import (
 	"bytes"
 	"context"
+	"crypto/sha256"
 	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
+	"net/http/cookiejar"
+	"net/url"
 	"os"
+	"regexp"
 	"strings"
 	"time"
 
@@ -19,10 +23,113 @@ import (
 )
 
 type account struct {
-	User struct {
-		ID string `json:"id"`
+	password string
+	User     struct {
+		ID       string `json:"id"`
+		Username string `json:"username"`
 	} `json:"user"`
 	Token string `json:"access_token"`
+}
+
+func checkPublicPages(ctx context.Context, base string) error {
+	assets := make(map[string]bool)
+	assetURL := regexp.MustCompile(`(?:href|src)="(/static/(?:css/app\.css|js/(?:auth|app|participants)\.js)\?v=[0-9a-f]{16})"`)
+	for _, path := range []string{"/", "/login", "/register"} {
+		r, err := http.NewRequestWithContext(ctx, "GET", base+path, nil)
+		if err != nil {
+			return err
+		}
+		resp, err := http.DefaultClient.Do(r)
+		if err != nil {
+			return err
+		}
+		body, err := io.ReadAll(io.LimitReader(resp.Body, 1<<20))
+		resp.Body.Close()
+		if err != nil {
+			return err
+		}
+		if resp.StatusCode != 200 || !strings.Contains(string(body), "Nero") {
+			return fmt.Errorf("UI %s: expected Nero HTML, got %d", path, resp.StatusCode)
+		}
+		matches := assetURL.FindAllStringSubmatch(string(body), -1)
+		if len(matches) != 4 {
+			return fmt.Errorf("UI %s: missing versioned CSS/JS", path)
+		}
+		for _, match := range matches {
+			assets[match[1]] = true
+		}
+	}
+	for path := range assets {
+		r, err := http.NewRequestWithContext(ctx, "GET", base+path, nil)
+		if err != nil {
+			return err
+		}
+		resp, err := http.DefaultClient.Do(r)
+		if err != nil {
+			return err
+		}
+		body, err := io.ReadAll(io.LimitReader(resp.Body, 2<<20))
+		resp.Body.Close()
+		if err != nil {
+			return err
+		}
+		if resp.StatusCode != 200 {
+			return fmt.Errorf("asset %s: got %d", path, resp.StatusCode)
+		}
+		hash := sha256.Sum256(body)
+		if !strings.HasSuffix(path, fmt.Sprintf("?v=%x", hash[:8])) {
+			return fmt.Errorf("asset %s: content hash does not match HTML", path)
+		}
+	}
+	fmt.Println("homepage, login, registration and versioned CSS/JS: OK")
+	return nil
+}
+
+func checkBrowserSession(ctx context.Context, base string, a account) error {
+	jar, err := cookiejar.New(nil)
+	if err != nil {
+		return err
+	}
+	client := &http.Client{Jar: jar, Timeout: 15 * time.Second}
+	form := url.Values{"username": {a.User.Username}, "password": {a.password}}
+	r, err := http.NewRequestWithContext(ctx, "POST", base+"/login", strings.NewReader(form.Encode()))
+	if err != nil {
+		return err
+	}
+	r.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	r.Header.Set("Origin", base)
+	resp, err := client.Do(r)
+	if err != nil {
+		return err
+	}
+	body, err := io.ReadAll(io.LimitReader(resp.Body, 1<<20))
+	resp.Body.Close()
+	if err != nil {
+		return err
+	}
+	if resp.StatusCode != 200 || !strings.Contains(string(body), `id="app-root"`) {
+		return fmt.Errorf("HTML login: expected authenticated app, got %d", resp.StatusCode)
+	}
+	for path, marker := range map[string]string{"/app/profile": "profile-content", "/app/new?type=group": "participant-picker"} {
+		r, err := http.NewRequestWithContext(ctx, "GET", base+path, nil)
+		if err != nil {
+			return err
+		}
+		resp, err := client.Do(r)
+		if err != nil {
+			return err
+		}
+		body, err := io.ReadAll(io.LimitReader(resp.Body, 1<<20))
+		resp.Body.Close()
+		if err != nil {
+			return err
+		}
+		if resp.StatusCode != 200 || !strings.Contains(string(body), marker) {
+			return fmt.Errorf("HTML %s: expected authenticated view, got %d", path, resp.StatusCode)
+		}
+	}
+	fmt.Println("HTML login cookies, profile and group picker: OK")
+	return nil
 }
 
 func request(ctx context.Context, base, method, path, token string, body any, expected int, out any) error {
@@ -62,6 +169,9 @@ func request(ctx context.Context, base, method, path, token string, body any, ex
 func run(base string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 45*time.Second)
 	defer cancel()
+	if err := checkPublicPages(ctx, base); err != nil {
+		return err
+	}
 	var accounts []account
 	defer func() {
 		cleanup, stop := context.WithTimeout(context.Background(), 15*time.Second)
@@ -74,16 +184,33 @@ func run(base string) error {
 	}()
 	for range 2 {
 		var a account
+		password := uuid.NewString()
 		err := request(ctx, base, "POST", "/auth/register", "", map[string]string{
 			"username":   "smoke_" + strings.ReplaceAll(uuid.NewString(), "-", "")[:16],
-			"first_name": "Deployment check", "password": uuid.NewString(),
+			"first_name": "Deployment check", "password": password,
 		}, 201, &a)
 		if err != nil {
 			return err
 		}
+		a.password = password
 		accounts = append(accounts, a)
 	}
 	fmt.Println("registration: OK (two accounts)")
+	if err := checkBrowserSession(ctx, base, accounts[0]); err != nil {
+		return err
+	}
+	var search struct {
+		Users []struct {
+			Username string `json:"username"`
+		} `json:"users"`
+	}
+	if err := request(ctx, base, "GET", "/users/search?q="+url.QueryEscape(accounts[1].User.Username), accounts[0].Token, nil, 200, &search); err != nil {
+		return err
+	}
+	if len(search.Users) == 0 || search.Users[0].Username != accounts[1].User.Username {
+		return fmt.Errorf("username search did not find the second account")
+	}
+	fmt.Println("username search: OK")
 	wsURL := "ws" + strings.TrimPrefix(base, "http") + "/api/v1/ws"
 	conn, _, err := websocket.Dial(ctx, wsURL, &websocket.DialOptions{HTTPHeader: http.Header{"Origin": []string{base}}})
 	if err != nil {
@@ -110,7 +237,7 @@ func run(base string) error {
 	var chat struct {
 		ID string `json:"id"`
 	}
-	if err = request(ctx, base, "POST", "/chats/directs", accounts[0].Token, map[string]string{"peer_id": accounts[1].User.ID}, 201, &chat); err != nil {
+	if err = request(ctx, base, "POST", "/chats/directs", accounts[0].Token, map[string]string{"peer_username": accounts[1].User.Username}, 201, &chat); err != nil {
 		return err
 	}
 	path := "/chats/" + chat.ID + "/messages"
@@ -167,7 +294,7 @@ func run(base string) error {
 
 func main() {
 	if len(os.Args) != 2 {
-		fmt.Fprintln(os.Stderr, "usage: smoke https://messenger.example.com")
+		fmt.Fprintln(os.Stderr, "usage: smoke https://nero.example.com")
 		os.Exit(2)
 	}
 	if err := run(strings.TrimRight(os.Args[1], "/")); err != nil {

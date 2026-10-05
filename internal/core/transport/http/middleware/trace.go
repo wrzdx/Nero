@@ -1,8 +1,8 @@
 package http_middleware
 
 import (
-	logger "messenger/internal/core/logger"
-	http_response "messenger/internal/core/transport/http/response"
+	logger "github.com/wrzdx/Nero/internal/core/logger"
+	http_response "github.com/wrzdx/Nero/internal/core/transport/http/response"
 	"net/http"
 	"time"
 

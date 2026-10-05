@@ -6,8 +6,8 @@ import (
 	"net/http"
 	"testing"
 
-	"messenger/internal/core/domain"
-	http_response "messenger/internal/core/transport/http/response"
+	"github.com/wrzdx/Nero/internal/core/domain"
+	http_response "github.com/wrzdx/Nero/internal/core/transport/http/response"
 
 	"github.com/stretchr/testify/require"
 )

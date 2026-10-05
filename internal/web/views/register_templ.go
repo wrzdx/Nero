@@ -105,7 +105,7 @@ func RegisterForm(data AuthFormData) templ.Component {
 			templ_7745c5c3_Var4 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<section id=\"auth-content\" class=\"w-full min-w-0\" aria-labelledby=\"auth-title\"><p class=\"mb-3 text-[11px] tracking-[0.12em] text-nero-muted\">Будем знакомы</p><h1 id=\"auth-title\" class=\"text-[26px] font-medium leading-normal tracking-[-1px]\">Создать аккаунт.</h1><p class=\"mt-2 mb-7 text-xs leading-7 text-nero-muted\">Имя пользователя и пароль для входа.</p>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<section id=\"auth-content\" class=\"w-full min-w-0\" aria-labelledby=\"auth-title\"><p class=\"auth-overline\">Будем знакомы</p><h1 id=\"auth-title\" class=\"auth-title\">Создать аккаунт.</h1><p class=\"auth-description\">Имя пользователя и пароль для входа.</p>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -113,7 +113,7 @@ func RegisterForm(data AuthFormData) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "<form method=\"post\" action=\"/register\" hx-post=\"/register\" hx-target=\"#auth-content\" hx-swap=\"outerHTML\" hx-sync=\"this:drop\" class=\"flex flex-col gap-5\" data-auth-form>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "<form method=\"post\" action=\"/register\" hx-post=\"/register\" hx-target=\"#auth-content\" hx-swap=\"outerHTML\" hx-sync=\"this:drop\" class=\"auth-form\" data-auth-form>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -125,7 +125,7 @@ func RegisterForm(data AuthFormData) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = PasswordField("new-password", "Придумайте пароль", data.Errors["password"], "От 15 символов, не более 72 байт.", 15).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = PasswordField("new-password", "Придумайте пароль", data.Errors["password"], "От 15 символов, до 72 байт.", 15).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -133,7 +133,7 @@ func RegisterForm(data AuthFormData) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "<p class=\"auth-network-error hidden text-xs leading-6 text-nero-accent\" role=\"alert\">Не удалось связаться с сервером. Попробуйте ещё раз.</p></form><p class=\"mt-6 text-center text-[11px] leading-6 text-nero-muted\">Уже есть аккаунт? <a href=\"/login\" class=\"auth-link\">Войти</a></p></section>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "<p class=\"auth-network-error hidden text-xs leading-6 text-nero-accent\" role=\"alert\">Не удалось связаться с сервером. Попробуйте ещё раз.</p></form><p class=\"auth-switch\">Уже есть аккаунт? <a href=\"/login\" class=\"auth-link\">Войти</a></p></section>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

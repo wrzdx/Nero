@@ -6,8 +6,8 @@ import (
 	"testing"
 	"time"
 
-	"messenger/internal/core/auth"
-	"messenger/internal/core/domain"
+	"github.com/wrzdx/Nero/internal/core/auth"
+	"github.com/wrzdx/Nero/internal/core/domain"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/mock"

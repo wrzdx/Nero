@@ -3,11 +3,11 @@ package http_middleware
 import (
 	"errors"
 	"fmt"
-	"messenger/internal/core/auth"
-	core_context "messenger/internal/core/context"
-	logger "messenger/internal/core/logger"
-	http_errmap "messenger/internal/core/transport/http/errmap"
-	http_response "messenger/internal/core/transport/http/response"
+	"github.com/wrzdx/Nero/internal/core/auth"
+	core_context "github.com/wrzdx/Nero/internal/core/context"
+	logger "github.com/wrzdx/Nero/internal/core/logger"
+	http_errmap "github.com/wrzdx/Nero/internal/core/transport/http/errmap"
+	http_response "github.com/wrzdx/Nero/internal/core/transport/http/response"
 	"net/http"
 	"strings"
 )

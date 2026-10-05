@@ -9,9 +9,9 @@ import (
 	"testing"
 	"time"
 
-	"messenger/internal/core/auth"
-	"messenger/internal/core/logger"
-	http_middleware "messenger/internal/core/transport/http/middleware"
+	"github.com/wrzdx/Nero/internal/core/auth"
+	"github.com/wrzdx/Nero/internal/core/logger"
+	http_middleware "github.com/wrzdx/Nero/internal/core/transport/http/middleware"
 
 	"github.com/coder/websocket"
 	"github.com/google/uuid"

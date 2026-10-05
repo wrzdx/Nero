@@ -8,11 +8,13 @@ templ Layout(title string) {
             <meta name="viewport" content="width=device-width, initial-scale=1"/>
             <meta name="color-scheme" content="dark"/>
             <title>{ title }</title>
-            <link rel="stylesheet" href="/static/css/app.css"/>
+            <link rel="stylesheet" href={ templ.SafeURL(AssetURL("/static/css/app.css")) }/>
             <link rel="stylesheet" href="/static/fonts/ibm-plex-mono.css"/>
             <link rel="icon" href="/static/images/nero-cut.svg" type="image/svg+xml"/>
             <script src="/static/js/htmx.min.js" defer></script>
-            <script src="/static/js/auth.js" defer></script>
+            <script src={ templ.SafeURL(AssetURL("/static/js/auth.js")) } defer></script>
+            <script src={ templ.SafeURL(AssetURL("/static/js/app.js")) } defer></script>
+            <script src={ templ.SafeURL(AssetURL("/static/js/participants.js")) } defer></script>
         </head>
         <body class="bg-nero-bg text-nero-text font-nero antialiased">
             { children... }

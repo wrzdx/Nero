@@ -1,7 +1,7 @@
 package chats_postgres_repository
 
 import (
-	"messenger/internal/core/postgres"
+	"github.com/wrzdx/Nero/internal/core/postgres"
 	"time"
 )
 

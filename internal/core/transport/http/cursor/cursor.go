@@ -4,7 +4,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	http_request "messenger/internal/core/transport/http/request"
+	http_request "github.com/wrzdx/Nero/internal/core/transport/http/request"
 )
 
 func Encode[T any](payload *T) (*string, error) {

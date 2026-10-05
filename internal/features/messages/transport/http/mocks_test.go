@@ -6,8 +6,8 @@ package messages_transport_http
 
 import (
 	"context"
-	"messenger/internal/core/domain"
-	"messenger/internal/features/messages/service"
+	"github.com/wrzdx/Nero/internal/core/domain"
+	"github.com/wrzdx/Nero/internal/features/messages/service"
 
 	"github.com/google/uuid"
 	mock "github.com/stretchr/testify/mock"

@@ -2,7 +2,7 @@ package chats_service
 
 import (
 	"context"
-	"messenger/internal/core/domain"
+	"github.com/wrzdx/Nero/internal/core/domain"
 
 	"github.com/google/uuid"
 )
@@ -76,6 +76,8 @@ type TXManager interface {
 }
 
 type UsersRepository interface {
+	GetUserByUsername(ctx context.Context, username string) (domain.User, error)
+
 	GetUserForUpdate(
 		ctx context.Context,
 		userID uuid.UUID,

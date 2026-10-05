@@ -6,7 +6,7 @@ package chats_service
 
 import (
 	"context"
-	"messenger/internal/core/domain"
+	"github.com/wrzdx/Nero/internal/core/domain"
 
 	"github.com/google/uuid"
 	mock "github.com/stretchr/testify/mock"
@@ -906,6 +906,72 @@ type MockUsersRepository_Expecter struct {
 
 func (_m *MockUsersRepository) EXPECT() *MockUsersRepository_Expecter {
 	return &MockUsersRepository_Expecter{mock: &_m.Mock}
+}
+
+// GetUserByUsername provides a mock function for the type MockUsersRepository
+func (_mock *MockUsersRepository) GetUserByUsername(ctx context.Context, username string) (domain.User, error) {
+	ret := _mock.Called(ctx, username)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetUserByUsername")
+	}
+
+	var r0 domain.User
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) (domain.User, error)); ok {
+		return returnFunc(ctx, username)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) domain.User); ok {
+		r0 = returnFunc(ctx, username)
+	} else {
+		r0 = ret.Get(0).(domain.User)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = returnFunc(ctx, username)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockUsersRepository_GetUserByUsername_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetUserByUsername'
+type MockUsersRepository_GetUserByUsername_Call struct {
+	*mock.Call
+}
+
+// GetUserByUsername is a helper method to define mock.On call
+//   - ctx context.Context
+//   - username string
+func (_e *MockUsersRepository_Expecter) GetUserByUsername(ctx any, username any) *MockUsersRepository_GetUserByUsername_Call {
+	return &MockUsersRepository_GetUserByUsername_Call{Call: _e.mock.On("GetUserByUsername", ctx, username)}
+}
+
+func (_c *MockUsersRepository_GetUserByUsername_Call) Run(run func(ctx context.Context, username string)) *MockUsersRepository_GetUserByUsername_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockUsersRepository_GetUserByUsername_Call) Return(user domain.User, err error) *MockUsersRepository_GetUserByUsername_Call {
+	_c.Call.Return(user, err)
+	return _c
+}
+
+func (_c *MockUsersRepository_GetUserByUsername_Call) RunAndReturn(run func(ctx context.Context, username string) (domain.User, error)) *MockUsersRepository_GetUserByUsername_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // GetUserForUpdate provides a mock function for the type MockUsersRepository

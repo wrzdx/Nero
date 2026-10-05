@@ -6,8 +6,8 @@ package auth_service
 
 import (
 	"context"
-	"messenger/internal/core/auth"
-	"messenger/internal/core/domain"
+	"github.com/wrzdx/Nero/internal/core/auth"
+	"github.com/wrzdx/Nero/internal/core/domain"
 	"time"
 
 	"github.com/google/uuid"

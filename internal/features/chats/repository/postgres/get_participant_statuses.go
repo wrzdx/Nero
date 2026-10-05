@@ -3,8 +3,8 @@ package chats_postgres_repository
 import (
 	"context"
 	"fmt"
-	"messenger/internal/core/postgres"
-	chats_service "messenger/internal/features/chats/service"
+	"github.com/wrzdx/Nero/internal/core/postgres"
+	chats_service "github.com/wrzdx/Nero/internal/features/chats/service"
 
 	"github.com/google/uuid"
 )

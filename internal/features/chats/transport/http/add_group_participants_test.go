@@ -8,10 +8,10 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"messenger/internal/core/domain"
-	"messenger/internal/core/logger"
-	http_response "messenger/internal/core/transport/http/response"
-	chats_service "messenger/internal/features/chats/service"
+	"github.com/wrzdx/Nero/internal/core/domain"
+	"github.com/wrzdx/Nero/internal/core/logger"
+	http_response "github.com/wrzdx/Nero/internal/core/transport/http/response"
+	chats_service "github.com/wrzdx/Nero/internal/features/chats/service"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/mock"
@@ -21,24 +21,24 @@ import (
 func TestAddGroupParticipants(t *testing.T) {
 	requesterID := uuid.MustParse("00000000-0000-0000-0000-000000000001")
 	groupID := uuid.MustParse("00000000-0000-0000-0000-000000000002")
-	memberID := uuid.MustParse("00000000-0000-0000-0000-000000000003")
-	unavailableID := uuid.MustParse("00000000-0000-0000-0000-000000000004")
+	memberID := "member_user"
+	unavailableID := "missing_user"
 
 	t.Run("returns positional participant results", func(t *testing.T) {
-		participantIDs := []uuid.UUID{memberID, unavailableID, memberID}
-		command := chats_service.AddGroupParticipantsCommand{
-			GroupID:        groupID,
-			RequesterID:    requesterID,
-			ParticipantIDs: participantIDs,
+		participantIDs := []string{memberID, unavailableID, memberID}
+		command := chats_service.AddGroupParticipantsByUsernamesCommand{
+			GroupID:              groupID,
+			RequesterID:          requesterID,
+			ParticipantUsernames: participantIDs,
 		}
-		result := []chats_service.AddGroupParticipantResult{
-			{UserID: memberID, Status: "added"},
-			{UserID: unavailableID, Status: "unavailable"},
-			{UserID: memberID, Status: "already_member"},
+		result := []chats_service.UsernameParticipantResult{
+			{Username: memberID, Status: "added"},
+			{Username: unavailableID, Status: "unavailable"},
+			{Username: memberID, Status: "already_member"},
 		}
 		service := NewMockChatsService(t)
 		service.EXPECT().
-			AddGroupParticipants(mock.Anything, command).
+			AddGroupParticipantsByUsernames(mock.Anything, command).
 			Return(result, nil)
 		router := newListChatsTransportRouter(service, requesterID)
 		recorder := httptest.NewRecorder()
@@ -46,36 +46,36 @@ func TestAddGroupParticipants(t *testing.T) {
 		router.ServeHTTP(
 			recorder,
 			newAddGroupParticipantsHTTPRequest(t, groupID.String(), map[string]any{
-				"participant_ids": participantIDs,
+				"participant_usernames": participantIDs,
 			}),
 		)
 
 		require.Equal(t, http.StatusOK, recorder.Code)
 		require.Equal(t, "application/json", recorder.Header().Get("Content-Type"))
 		require.Equal(t, AddGroupParticipantsResponse{
-			{UserID: memberID, Status: "added"},
-			{UserID: unavailableID, Status: "unavailable"},
-			{UserID: memberID, Status: "already_member"},
+			{Username: memberID, Status: "added"},
+			{Username: unavailableID, Status: "unavailable"},
+			{Username: memberID, Status: "already_member"},
 		}, decodeAddGroupParticipantsResponse(t, recorder))
 	})
 
 	t.Run("allows empty participant list", func(t *testing.T) {
 		service := NewMockChatsService(t)
-		service.EXPECT().AddGroupParticipants(
+		service.EXPECT().AddGroupParticipantsByUsernames(
 			mock.Anything,
-			chats_service.AddGroupParticipantsCommand{
-				GroupID:        groupID,
-				RequesterID:    requesterID,
-				ParticipantIDs: []uuid.UUID{},
+			chats_service.AddGroupParticipantsByUsernamesCommand{
+				GroupID:              groupID,
+				RequesterID:          requesterID,
+				ParticipantUsernames: []string{},
 			},
-		).Return([]chats_service.AddGroupParticipantResult{}, nil)
+		).Return([]chats_service.UsernameParticipantResult{}, nil)
 		router := newListChatsTransportRouter(service, requesterID)
 		recorder := httptest.NewRecorder()
 
 		router.ServeHTTP(
 			recorder,
 			newAddGroupParticipantsHTTPRequest(t, groupID.String(), map[string]any{
-				"participant_ids": []uuid.UUID{},
+				"participant_usernames": []string{},
 			}),
 		)
 
@@ -92,7 +92,7 @@ func TestAddGroupParticipants(t *testing.T) {
 		router.ServeHTTP(
 			recorder,
 			newAddGroupParticipantsHTTPRequest(t, "not-a-uuid", map[string]any{
-				"participant_ids": []uuid.UUID{memberID},
+				"participant_usernames": []string{memberID},
 			}),
 		)
 
@@ -113,7 +113,7 @@ func TestAddGroupParticipants(t *testing.T) {
 		router.ServeHTTP(
 			recorder,
 			newAddGroupParticipantsHTTPRequest(t, groupID.String(), map[string]any{
-				"participant_ids": []string{memberID.String(), "not-a-uuid"},
+				"participant_usernames": []string{memberID, "not-a-uuid"},
 			}),
 		)
 
@@ -122,20 +122,20 @@ func TestAddGroupParticipants(t *testing.T) {
 			Code:    "invalid_request",
 			Message: "invalid request",
 			Fields: map[string]string{
-				"participant_ids[1]": "invalid uuid",
+				"participant_usernames[1]": "must contain 5–32 ASCII letters, digits or underscores",
 			},
 		}, decodeChatsTransportError(t, recorder))
 	})
 
 	t.Run("maps invalid service command", func(t *testing.T) {
-		command := chats_service.AddGroupParticipantsCommand{
-			GroupID:        groupID,
-			RequesterID:    requesterID,
-			ParticipantIDs: []uuid.UUID{memberID},
+		command := chats_service.AddGroupParticipantsByUsernamesCommand{
+			GroupID:              groupID,
+			RequesterID:          requesterID,
+			ParticipantUsernames: []string{memberID},
 		}
 		service := NewMockChatsService(t)
 		service.EXPECT().
-			AddGroupParticipants(mock.Anything, command).
+			AddGroupParticipantsByUsernames(mock.Anything, command).
 			Return(nil, chats_service.ErrInvalidInput)
 		router := newListChatsTransportRouter(service, requesterID)
 		recorder := httptest.NewRecorder()
@@ -143,7 +143,7 @@ func TestAddGroupParticipants(t *testing.T) {
 		router.ServeHTTP(
 			recorder,
 			newAddGroupParticipantsHTTPRequest(t, groupID.String(), map[string]any{
-				"participant_ids": []uuid.UUID{memberID},
+				"participant_usernames": []string{memberID},
 			}),
 		)
 
@@ -155,14 +155,14 @@ func TestAddGroupParticipants(t *testing.T) {
 	})
 
 	t.Run("maps insufficient rights", func(t *testing.T) {
-		command := chats_service.AddGroupParticipantsCommand{
-			GroupID:        groupID,
-			RequesterID:    requesterID,
-			ParticipantIDs: []uuid.UUID{memberID},
+		command := chats_service.AddGroupParticipantsByUsernamesCommand{
+			GroupID:              groupID,
+			RequesterID:          requesterID,
+			ParticipantUsernames: []string{memberID},
 		}
 		service := NewMockChatsService(t)
 		service.EXPECT().
-			AddGroupParticipants(mock.Anything, command).
+			AddGroupParticipantsByUsernames(mock.Anything, command).
 			Return(nil, chats_service.ErrNotEnoughRights)
 		router := newListChatsTransportRouter(service, requesterID)
 		recorder := httptest.NewRecorder()
@@ -170,7 +170,7 @@ func TestAddGroupParticipants(t *testing.T) {
 		router.ServeHTTP(
 			recorder,
 			newAddGroupParticipantsHTTPRequest(t, groupID.String(), map[string]any{
-				"participant_ids": []uuid.UUID{memberID},
+				"participant_usernames": []string{memberID},
 			}),
 		)
 
@@ -182,14 +182,14 @@ func TestAddGroupParticipants(t *testing.T) {
 	})
 
 	t.Run("maps missing group or requester", func(t *testing.T) {
-		command := chats_service.AddGroupParticipantsCommand{
-			GroupID:        groupID,
-			RequesterID:    requesterID,
-			ParticipantIDs: []uuid.UUID{memberID},
+		command := chats_service.AddGroupParticipantsByUsernamesCommand{
+			GroupID:              groupID,
+			RequesterID:          requesterID,
+			ParticipantUsernames: []string{memberID},
 		}
 		service := NewMockChatsService(t)
 		service.EXPECT().
-			AddGroupParticipants(mock.Anything, command).
+			AddGroupParticipantsByUsernames(mock.Anything, command).
 			Return(nil, domain.ErrNotFound)
 		router := newListChatsTransportRouter(service, requesterID)
 		recorder := httptest.NewRecorder()
@@ -197,7 +197,7 @@ func TestAddGroupParticipants(t *testing.T) {
 		router.ServeHTTP(
 			recorder,
 			newAddGroupParticipantsHTTPRequest(t, groupID.String(), map[string]any{
-				"participant_ids": []uuid.UUID{memberID},
+				"participant_usernames": []string{memberID},
 			}),
 		)
 
@@ -210,14 +210,14 @@ func TestAddGroupParticipants(t *testing.T) {
 
 	t.Run("does not expose unexpected service error", func(t *testing.T) {
 		serviceErr := errors.New("database unavailable")
-		command := chats_service.AddGroupParticipantsCommand{
-			GroupID:        groupID,
-			RequesterID:    requesterID,
-			ParticipantIDs: []uuid.UUID{memberID},
+		command := chats_service.AddGroupParticipantsByUsernamesCommand{
+			GroupID:              groupID,
+			RequesterID:          requesterID,
+			ParticipantUsernames: []string{memberID},
 		}
 		service := NewMockChatsService(t)
 		service.EXPECT().
-			AddGroupParticipants(mock.Anything, command).
+			AddGroupParticipantsByUsernames(mock.Anything, command).
 			Return(nil, serviceErr)
 		router := newListChatsTransportRouter(service, requesterID)
 		recorder := httptest.NewRecorder()
@@ -225,7 +225,7 @@ func TestAddGroupParticipants(t *testing.T) {
 		router.ServeHTTP(
 			recorder,
 			newAddGroupParticipantsHTTPRequest(t, groupID.String(), map[string]any{
-				"participant_ids": []uuid.UUID{memberID},
+				"participant_usernames": []string{memberID},
 			}),
 		)
 

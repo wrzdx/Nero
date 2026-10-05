@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"messenger/internal/core/domain"
+	"github.com/wrzdx/Nero/internal/core/domain"
 	"time"
 
 	"github.com/google/uuid"

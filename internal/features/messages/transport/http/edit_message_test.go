@@ -9,10 +9,10 @@ import (
 	"testing"
 	"time"
 
-	"messenger/internal/core/domain"
-	"messenger/internal/core/logger"
-	http_response "messenger/internal/core/transport/http/response"
-	messages_service "messenger/internal/features/messages/service"
+	"github.com/wrzdx/Nero/internal/core/domain"
+	"github.com/wrzdx/Nero/internal/core/logger"
+	http_response "github.com/wrzdx/Nero/internal/core/transport/http/response"
+	messages_service "github.com/wrzdx/Nero/internal/features/messages/service"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/mock"
