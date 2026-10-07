@@ -34,7 +34,7 @@ must sign in again on the new domain.
 - Server architecture: `x86_64`; build with `-Architecture amd64`.
 - Root: `/srv/messenger`; release directories: `/srv/messenger/releases/<release-id>`.
 - Secrets: `/srv/messenger/.env`, retained between releases.
-- PostgreSQL data: `/srv/messenger/data`; logs: `/srv/messenger/logs`.
+- PostgreSQL data: `/srv/messenger/data`.
 - Compose project: `messenger`; app listens on `127.0.0.1:5051` behind Nginx.
 
 The application module is `github.com/wrzdx/Nero`, its entrypoint is `cmd/nero`,

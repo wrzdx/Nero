@@ -24,7 +24,7 @@ npm run build:ui
 make run
 ```
 
-PostgreSQL data lives under `out/pgdata`; application logs use `out/logs`.
+PostgreSQL data lives under `out/pgdata`.
 The port forwarder exposes PostgreSQL on `127.0.0.1:5432`. `make run` sets
 `POSTGRES_HOST=localhost`, loads the Makefile environment, runs `go mod tidy`,
 and starts the application. It can therefore update module files.

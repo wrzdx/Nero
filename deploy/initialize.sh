@@ -7,7 +7,6 @@ if [ -e "$root/.env" ]; then
     exit 0
 fi
 install -d -m 700 "$root"
-install -d -m 755 -o 10001 -g 10001 "$root/logs"
 umask 077
 set -C
 {

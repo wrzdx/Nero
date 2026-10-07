@@ -54,8 +54,6 @@ func main() {
 		os.Exit(1)
 	}
 
-	defer logger.Close()
-
 	logger.Debug("application time zone", zap.Any("zone", time.Local))
 	logger.Debug("initializing postgres connection pool")
 	postgresConfig := postgres.NewConfigMust()

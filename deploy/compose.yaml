@@ -23,13 +23,10 @@ services:
       POSTGRES_DB: messenger
       POSTGRES_TIMEOUT: 10s
       LOGGER_LEVEL: INFO
-      LOGGER_FOLDER: /app/logs
       GOMEMLIMIT: 192MiB
       GOMAXPROCS: "2"
     ports:
       - "127.0.0.1:5051:5050"
-    volumes:
-      - ${MESSENGER_ROOT:?required}/logs:/app/logs
     depends_on:
       db:
         condition: service_healthy
