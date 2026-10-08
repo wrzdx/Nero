@@ -4,23 +4,31 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	logger "github.com/wrzdx/Nero/internal/core/logger"
 	"net/http"
+
+	logger "github.com/wrzdx/Nero/internal/core/logger"
 
 	"go.uber.org/zap"
 )
 
 type HTTPServer struct {
-	router http.Handler
-	config Config
-	log    *logger.Logger
+	router     http.Handler
+	config     Config
+	log        *logger.Logger
+	shutdownWS func(context.Context) error
 }
 
-func NewHTTPServer(config Config, log *logger.Logger, router http.Handler) *HTTPServer {
+func NewHTTPServer(
+	config Config,
+	log *logger.Logger,
+	router http.Handler,
+	shutdownWS func(context.Context) error,
+) *HTTPServer {
 	return &HTTPServer{
-		router: router,
-		config: config,
-		log:    log,
+		router:     router,
+		config:     config,
+		log:        log,
+		shutdownWS: shutdownWS,
 	}
 }
 
@@ -45,26 +53,38 @@ func (s *HTTPServer) Run(ctx context.Context) error {
 		}
 	}()
 
+	var serveErr error
+
 	select {
 	case err := <-ch:
 		if err != nil {
-			return fmt.Errorf("listen and serve HTTP: %w", err)
+			serveErr = fmt.Errorf("listen and serve HTTP: %w", err)
 		}
 	case <-ctx.Done():
 		s.log.Warn("shutdown HTTP server...")
-		shutdownCtx, cancel := context.WithTimeout(
-			context.Background(),
-			s.config.ShutdownTimeout,
-		)
-		defer cancel()
-		if err := server.Shutdown(shutdownCtx); err != nil {
-			_ = server.Close()
-
-			return fmt.Errorf("shutdown HTTP server: %w", err)
-		}
-
-		s.log.Warn("HTTP server stopped")
 	}
+
+	shutdownCtx, cancel := context.WithTimeout(
+		context.Background(),
+		s.config.ShutdownTimeout,
+	)
+	defer cancel()
+	httpErr := server.Shutdown(shutdownCtx)
+	if httpErr != nil {
+		_ = server.Close()
+		httpErr = fmt.Errorf("shutdown HTTP server: %w", httpErr)
+	}
+
+	wsErr := s.shutdownWS(shutdownCtx)
+	if wsErr != nil {
+		wsErr = fmt.Errorf("shutdown WebSocket handlers: %w", wsErr)
+	}
+
+	if err := errors.Join(serveErr, httpErr, wsErr); err != nil {
+		return err
+	}
+
+	s.log.Warn("HTTP server stopped")
 
 	return nil
 }
