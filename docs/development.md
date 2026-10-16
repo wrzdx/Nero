@@ -9,7 +9,7 @@ POSIX-compatible shell. On Windows, run Make targets from Git Bash: several
 recipes use `export`, shell conditionals, and line continuations.
 
 ```sh
-cp .env.example .env
+cp example.env .env
 ```
 
 Edit the local file before starting. The sample credentials are for development;
@@ -41,16 +41,18 @@ directly, export the configuration into the process environment first.
 | `HTTP_ALLOWED_ORIGINS` | HTTP CORS origins; `http://localhost:5050` |
 | `JWT_SECRET` | Required signing secret; replace the sample value |
 | `AUTH_ACCESS_TOKEN_TTL` | Access-token lifetime; `15m` |
-| `AUTH_SESSION_TTL` | Session lifetime; `.env.example` sets `1h` |
+| `AUTH_SESSION_TTL` | Session lifetime; `example.env` sets `1h`, Go default is `24h` |
 | `ENVIRONMENT` | `development`; production enables Secure refresh cookies |
 | `TIME_ZONE` | `Europe/Moscow` in the example; application default is UTC |
 | `STATIC_DIR` | Static UI files; defaults to `./web/static` |
 | `POSTGRES_HOST` | Required; Make sets localhost for local runs/tests |
 | `POSTGRES_PORT` | Defaults to `5432` |
 | `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB` | Database credentials and name |
-| `POSTGRES_TIMEOUT` | Database operation timeout; `10s` |
+| `POSTGRES_TIMEOUT` | Required positive startup connection/ping timeout; example `10s` |
+| `POSTGRES_SSLMODE` | `disable` (default) or `verify-full` |
+| `POSTGRES_SSLROOTCERT` | CA file path, required by Nero for `verify-full` |
 | `POSTGRES_TEST_DB` | Dedicated integration database; `messenger_test` |
-| `LOGGER_LEVEL` | Logging level and output directory |
+| `LOGGER_LEVEL` | Logging level; Go default `DEBUG`; output goes to stdout |
 
 HTTP CORS configuration is not a WebSocket origin allowlist. The WebSocket
 handler uses the library's default same-origin acceptance policy.
@@ -63,11 +65,18 @@ container. The image builds Tailwind CSS, asset hashes, templ views and Go;
 the runtime includes the static files. PostgreSQL and migrations remain separate
 steps. The target does not deploy to the remote server.
 
-For remote releases use the [deployment guide](deployment.md). The production
-image consumes a prebuilt Linux binary plus `web/static`; it does not compile Go
-or run Node on the VPS.
+For remote releases use the [deployment guide](deployment.md). CI builds the root
+multi-stage Dockerfile and publishes the image to GHCR. The server pulls that
+image by digest. Production inputs are documented in `deploy/runtime.example.env`;
+`example.env` is the development template.
 
 ## Tests
+
+The release packager has Python standard-library tests, also run by CI:
+
+```sh
+python3 -B -m unittest discover -s scripts/tests -v
+```
 
 ```sh
 make test-unit

@@ -171,7 +171,7 @@ Requires Go 1.26.4, Node.js/npm, Docker Compose, GNU Make, and a POSIX-compatibl
 (for example Git Bash on Windows). The Makefile reads and exports `.env`:
 
 ```sh
-cp .env.example .env
+cp example.env .env
 # Edit .env: replace the example JWT secret and database password.
 make env-up
 make env-port-forward
@@ -188,6 +188,11 @@ export configuration first when running Go directly.
 For local Docker startup, `make deploy` builds the UI and Go application, then
 starts the `messenger` service. PostgreSQL and migrations remain separate steps.
 This target is local; it does not update the remote domain.
+
+Production images are built in CI and published to GHCR. The release archive
+contains the matching Compose, migrations, configuration template and image
+metadata. See the [deployment guide](docs/deployment.md) for packaging with
+`scripts/package-release.py`, server configuration snapshots and manual rollback.
 
 ## Tests
 
