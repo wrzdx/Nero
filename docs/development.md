@@ -50,7 +50,7 @@ directly, export the configuration into the process environment first.
 | `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB` | Database credentials and name |
 | `POSTGRES_TIMEOUT` | Database operation timeout; `10s` |
 | `POSTGRES_TEST_DB` | Dedicated integration database; `messenger_test` |
-| `LOGGER_LEVEL`, `LOGGER_FOLDER` | Logging level and output directory |
+| `LOGGER_LEVEL` | Logging level and output directory |
 
 HTTP CORS configuration is not a WebSocket origin allowlist. The WebSocket
 handler uses the library's default same-origin acceptance policy.

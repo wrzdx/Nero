@@ -1,7 +1,8 @@
 services:
   messenger:
     build:
-      dockerfile: cmd/nero/Dockerfile
+      context: .
+      dockerfile: Dockerfile
     container_name: nero-local
     env_file:
       - .env
