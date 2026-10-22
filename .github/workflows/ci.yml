@@ -88,6 +88,9 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
 
+    env:
+      RELEASE_ID: r${{ github.run_number }}.${{ github.run_attempt }}
+
     permissions:
       contents: read
       packages: write
@@ -135,13 +138,13 @@ jobs:
           python3 scripts/package-release.py \
             --commit "$GITHUB_SHA" \
             --image "$IMAGE_NAME@$IMAGE_DIGEST" \
-            --release-id "$GITHUB_SHA-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT" \
+            --release-id "$RELEASE_ID" \
             --build-url "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
 
       - name: Сохранить архив релиза
         uses: actions/upload-artifact@v7
         with:
-          name: nero-release-${{ github.sha }}-${{ github.run_attempt }}
+          name: nero-release-${{ env.RELEASE_ID }}
           path: |
             out/releases/*.tar.gz
             out/releases/*.tar.gz.sha256
@@ -153,6 +156,6 @@ jobs:
           IMAGE_NAME: ${{ steps.image.outputs.name }}
           IMAGE_DIGEST: ${{ steps.build.outputs.digest }}
         run: |
-          printf 'Коммит: %s\n\nОбраз: %s:sha-%s\n\nОбраз для деплоя: %s@%s\n' \
-            "$GITHUB_SHA" "$IMAGE_NAME" "$GITHUB_SHA" \
+          printf 'Релиз: %s\n\nКоммит: %s\n\nОбраз: %s:sha-%s\n\nОбраз для деплоя: %s@%s\n' \
+            "$RELEASE_ID" "$GITHUB_SHA" "$IMAGE_NAME" "$GITHUB_SHA" \
             "$IMAGE_NAME" "$IMAGE_DIGEST" >> "$GITHUB_STEP_SUMMARY"
