@@ -9,12 +9,14 @@ import (
 )
 
 type Config struct {
-	Host     string        `envconfig:"HOST"     required:"true"`
-	Port     string        `envconfig:"PORT"     default:"5432"`
-	User     string        `envconfig:"USER"     required:"true"`
-	Password string        `envconfig:"PASSWORD" required:"true"`
-	Database string        `envconfig:"DB"       required:"true"`
-	Timeout  time.Duration `envconfig:"TIMEOUT"  required:"true"`
+	Host        string        `envconfig:"HOST"     required:"true"`
+	Port        string        `envconfig:"PORT"     default:"5432"`
+	User        string        `envconfig:"USER"     required:"true"`
+	Password    string        `envconfig:"PASSWORD" required:"true"`
+	Database    string        `envconfig:"DB"       required:"true"`
+	Timeout     time.Duration `envconfig:"TIMEOUT"  required:"true"`
+	SSLMode     string        `envconfig:"SSLMODE" default:"disable"`
+	SSLRootCert string        `envconfig:"SSLROOTCERT"`
 }
 
 func NewConfig() (Config, error) {
@@ -25,6 +27,13 @@ func NewConfig() (Config, error) {
 
 	if config.Timeout <= 0 {
 		return Config{}, errors.New("invalid postgres timeout")
+	}
+	if config.SSLMode != "disable" && config.SSLMode != "verify-full" {
+		return Config{}, errors.New("unsupported postgres sslmode")
+	}
+
+	if config.SSLMode == "verify-full" && config.SSLRootCert == "" {
+		return Config{}, errors.New("postgres sslrootcert is required for verify-full")
 	}
 
 	return config, nil

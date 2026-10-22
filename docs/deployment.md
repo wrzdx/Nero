@@ -1,155 +1,390 @@
-# Deployment
+# Развёртывание Nero
 
-[Back to README](../README.md) · [Frontend](frontend.md) · [Development](development.md)
+[README](../README.md) · [Локальная разработка](development.md) · [Frontend](frontend.md)
 
-The public deployment uses Nginx with HTTPS and Docker Compose. This is separate
-from `make deploy`, which starts the local development container. The production
-image in `deploy/Dockerfile` consumes a prebuilt Linux binary and static UI files;
-Go, npm and Tailwind run on the development machine, not the VPS.
+Обычное обновление: **коммит → push → успешная сборка в Actions → скачать архив →
+новая папка на сервере → скопировать настройки → миграции → запустить приложение**.
 
-## Release deployed on 2026-10-05
+После push в `main` или `12factor` CI проверяет проект, публикует образ приложения
+в `ghcr.io/wrzdx/nero` и прикладывает архив к запуску GitHub Actions. Ждать слияния
+`12factor` в `main` для получения архива не нужно. PR запускает проверки;
+публикация происходит в запуске с событием **push**. Сервер обновляется вручную.
+Вкладка GitHub Releases сейчас для публикации не используется.
 
-Active release: `20261005-nero-branding`, built from commit `aedb5b1` with a clean
-working tree. Previous release retained for rollback: `20261005-nero-ui`.
-The update includes the Nero UI, username-based chat inputs, user search, and
-the module/binary/image rename. It required no new migrations; PostgreSQL remains
-at version 3 with `dirty=false`.
+- [Обновление работающего сервера](#обновление-работающего-сервера)
+- [Первый запуск](#первый-запуск)
+- [Возврат предыдущего релиза](#возврат-предыдущего-релиза)
+- [Какие файлы хранит релиз](#какие-файлы-хранит-релиз)
+- [Справочник настроек](#справочник-настроек)
 
-Checks passed through the public HTTPS domain: pages and asset content hashes,
-registration, HTML login cookies, profile/group views, username search,
-WebSocket authentication, message create/edit/delete events and read state.
-The public domain is now `nero.wrzdx.tech`; its A record points to
-`151.241.109.138`. Nginx uses `/etc/nginx/sites-available/nero`, proxies to the same
-app port, and serves a dedicated Let's Encrypt certificate with automatic
-renewal. The certificate issued on 2026-10-05 expires on 2027-01-03.
-`APP_ORIGIN` in the retained server environment was updated to the new domain.
-The older Nginx host is still configured, but the old hostname also needs a DNS
-record to remain reachable. Browser cookies are scoped to the hostname, so users
-must sign in again on the new domain.
+## Обновление работающего сервера
 
-## Existing server
+Команды ниже рассчитаны на Linux, Bash и Docker с плагином Compose. На сервере
+используется каталог `~/messenger/releases`, как при первом запуске.
+`~` означает домашний каталог пользователя: для `root` это `/root`.
+Если релизы лежат в другом месте, подставь свой путь.
 
-- Domain: `https://nero.wrzdx.tech`.
-- SSH: `root@151.241.109.138`, port 22. Confirm the address before a future release.
-- Server architecture: `x86_64`; build with `-Architecture amd64`.
-- Root: `/srv/messenger`; release directories: `/srv/messenger/releases/<release-id>`.
-- Secrets: `/srv/messenger/.env`, retained between releases.
-- PostgreSQL data: `/srv/messenger/data`; logs: `/srv/messenger/logs`.
-- Compose project: `messenger`; app listens on `127.0.0.1:5051` behind Nginx.
+Выполняй шаги по очереди. При ошибке сначала исправь её, затем продолжай.
 
-The application module is `github.com/wrzdx/Nero`, its entrypoint is `cmd/nero`,
-and new releases use the `nero` image and binary. Existing infrastructure names
-(`messenger` Compose project, database/user, and `/srv/messenger` paths) are
-retained so the rename reuses the current database, network, and persistent data.
-Changing those names requires a separate data migration.
+### 1. На компьютере: отправь изменения
 
-Read the active image and release directory before updating:
+Сохрани нужные изменения в коммит и отправь ветку:
 
 ```sh
-docker inspect messenger-app-1 --format '{{.Config.Image}} {{index .Config.Labels "com.docker.compose.project.working_dir"}}'
-docker ps --filter name=messenger
+git push origin 12factor
 ```
 
-Do not use another release's `.env` or reinitialize the server's secrets. The
-first-deployment helper `initialize.sh` deliberately preserves an existing `.env`.
+Для ветки `main` команда такая же, с `main` вместо `12factor`.
+Например, исправление `postgres://` на `postgres:///` в `deploy/compose.yaml`
+должно попасть в коммит: локальные незакоммиченные изменения в архив не попадут.
 
-## Build a release on Windows
+### 2. На компьютере: скачай архив из Actions
 
-From the repository root in PowerShell, with Go, npm and dependencies installed:
+1. Открой [Actions → CI](https://github.com/wrzdx/Nero/actions/workflows/ci.yml).
+2. Выбери запуск для отправленного коммита с событием **push**.
+3. Дождись успешного завершения, включая задачу `publish`.
+4. Внизу страницы, в **Artifacts**, скачай `nero-release-<commit>-<attempt>`.
+5. Распакуй скачанный ZIP на компьютере. Внутри будут два файла:
+   `<release-id>.tar.gz` и `<release-id>.tar.gz.sha256`.
 
-```powershell
-npm.cmd ci
-./scripts/build-release.ps1 -ReleaseId 20261005-nero -Architecture amd64
-```
+`<release-id>` — имя файла без `.tar.gz`, например
+`ab412c65da2cc029c5f67924214d48b0d4e64454-39754541454-1`.
+Артефакт `.dockerbuild` для установки приложения не нужен.
 
-Choose a unique release ID each time. The script builds templ, Tailwind and asset
-hashes, runs `go test ./...` and `go vet ./...`, then cross-compiles Go with
-`GOOS=linux`, `CGO_ENABLED=0`. It packages the Linux binary, static files,
-migrations, production Dockerfile/Compose, docs and a release manifest under
-`out/releases/`. It excludes `.env`, database files, logs and private keys.
-
-The `.tar.gz.sha256` sidecar verifies the transferred archive. `release.json`
-records hashes, architecture, the base Git commit, and whether the working tree
-contained uncommitted changes. Packaging a working tree does not commit or push it.
-
-## Transfer and start
-
-Record the old release ID and retain its image/directory for rollback. Copy the
-archive and checksum to the server, using your chosen ID:
-
-```powershell
-scp out/releases/20261005-nero.tar.gz out/releases/20261005-nero.tar.gz.sha256 root@151.241.109.138:/srv/messenger/releases/
-```
-
-On the server:
+Из папки с этими двумя файлами отправь их на сервер. В команде замени
+`ID_НОВОГО_РЕЛИЗА` на ID скачанного архива, а `SERVER` на адрес сервера:
 
 ```sh
-set -eu
-cd /srv/messenger/releases
-sha256sum -c 20261005-nero.tar.gz.sha256
-mkdir 20261005-nero
-tar -xzf 20261005-nero.tar.gz -C 20261005-nero
-cd 20261005-nero
-export RELEASE_ID=20261005-nero
-docker compose --env-file /srv/messenger/.env build app
-docker compose --env-file /srv/messenger/.env up -d --no-deps app
+RELEASE_ID='ID_НОВОГО_РЕЛИЗА'
+scp "$RELEASE_ID.tar.gz" "$RELEASE_ID.tar.gz.sha256" root@SERVER:/root/messenger/releases/
 ```
 
-The unchanged Compose project name keeps the existing database/network. Only the
-app is recreated. Nginx continues to proxy to the same loopback port. The release
-must include `web/static`; the production image copies it to `/app/web/static`
-and sets `STATIC_DIR` accordingly.
+Это пример для входа на сервер под `root`. При другом пользователе укажи его
+имя и абсолютный путь к его каталогу релизов.
 
-This UI/username/search release has no new database migrations. The deployed
-database must already have migration version 3 with `dirty=false`. Before future
-schema changes, prepare a backup and a compatible rollback plan, then run the
-existing migration service deliberately. Starting the application does not run
-migrations automatically.
+### 3. На сервере: распакуй новый релиз
 
-## Check the release
+В серверном терминале задай `RELEASE_ID` ещё раз: переменные с компьютера
+по SSH не переносятся.
 
 ```sh
-docker compose --env-file /srv/messenger/.env ps app
-curl -fsS https://nero.wrzdx.tech/ >/dev/null
-curl -fsS https://nero.wrzdx.tech/login >/dev/null
-curl -fsS https://nero.wrzdx.tech/register >/dev/null
-curl -i https://nero.wrzdx.tech/api/v1/users/me
+RELEASE_ID='ID_НОВОГО_РЕЛИЗА'
+cd ~/messenger/releases &&
+sha256sum -c "$RELEASE_ID.tar.gz.sha256" &&
+mkdir "$RELEASE_ID" &&
+tar -xzf "$RELEASE_ID.tar.gz" -C "$RELEASE_ID" &&
+cd "$RELEASE_ID" &&
+sha256sum -c checksums.sha256
 ```
 
-The final request should return `401 invalid_token` without credentials. Check
-that the HTML references `/static/css/app.css?v=<hash>` and that the referenced
-CSS/JS return 200. User pages use `Cache-Control: no-store`; static assets use
-`no-cache` and content hashes in the application CSS/JS URLs.
+Обе проверки контрольных сумм должны завершиться с `OK`. Связка `&&`
+останавливает этот блок при ошибке. `mkdir` создаёт новую папку: каждый релиз
+распаковывается отдельно, предыдущая папка остаётся для возврата.
 
-From the development machine, the API/WebSocket smoke check is:
+### 4. На сервере: скопируй настройки предыдущего релиза
+
+Все следующие команды обновления выполняются **из новой папки релиза**.
+Укажи ID релиза, который сейчас работает, и скопируй его настройки:
 
 ```sh
-go run ./deploy/smoke https://nero.wrzdx.tech
+PREVIOUS_RELEASE_ID='ID_ТЕКУЩЕГО_РЕЛИЗА'
+umask 077
+test ! -e ./runtime.env && test ! -L ./runtime.env &&
+cp "../$PREVIOUS_RELEASE_ID/runtime.env" ./runtime.env &&
+chmod 600 ./runtime.env
 ```
 
-It checks public pages and CSS/JS content hashes, creates two temporary users,
-checks HTML login cookies, profile/group pages and username search, then creates
-a direct chat and checks WebSocket authentication and create/edit/delete events.
-It advances the read marker, removes its message and anonymizes its users. The
-empty chat/anonymized rows remain; it is not a zero-write health probe. JSON chat
-inputs now use usernames, so run the current smoke code.
+Проверки `test` защищают уже существующий `runtime.env` от перезаписи.
+Если он уже создан, проверь его содержимое и продолжай с ним.
 
-Also check the UI in a browser: login, user search, group member selection,
-profile, mobile layout and realtime. After deployment, fully reload already-open
-tabs: htmx navigation does not replace CSS/JS loaded by the old document.
-
-## Roll back the app
-
-Return to the recorded previous release directory, use its ID and recreate only
-the app without rebuilding or pulling:
+Посмотри сведения о новой сборке и открой **новую копию** настроек:
 
 ```sh
-cd /srv/messenger/releases/<previous-release-id>
-export RELEASE_ID=<previous-release-id>
-docker compose --env-file /srv/messenger/.env up -d --no-deps --no-build --pull never app
+cat build.json
+nano runtime.env
 ```
 
-Keep the previous image until checks have passed. This restores application code
-and static files, not database data or schema. The current release needs no schema
-rollback. Do not run `down -v`, delete `/srv/messenger/data`, print `.env`, or remove
-the prior release as part of an ordinary update.
+В `runtime.env` замени `APP_IMAGE` на значение поля `image` из нового
+`build.json`, целиком, включая `@sha256:...`. Это точная ссылка на собранный
+образ приложения. Остальные значения меняй по необходимости.
+
+Сохрани прежние `JWT_SECRET`, реквизиты БД и `MESSENGER_ROOT`: новый каталог
+релиза продолжает использовать ту же базу. Для существующего Nginx используется
+`APP_PORT=5051`. Сравни новый `runtime.example.env` со старой конфигурацией:
+если появились обязательные настройки, добавь их в новую копию.
+
+Рядом создай `release.json`, указав в обоих местах ID новой папки:
+
+```sh
+nano release.json
+```
+
+```json
+{
+  "releaseId": "ID_НОВОГО_РЕЛИЗА",
+  "buildFile": "build.json",
+  "configVersion": "ID_НОВОГО_РЕЛИЗА",
+  "configFile": "runtime.env"
+}
+```
+
+Так релиз связывает конкретную сборку с конкретной копией серверных настроек.
+`runtime.env` содержит секреты и хранится только на сервере. После запуска
+сохраняй файлы этого релиза без изменений; следующее изменение настроек получает
+свою папку и ID, даже если образ приложения остаётся прежним.
+
+### 5. На сервере: проверь настройки и скачай образ
+
+```sh
+docker compose --env-file ./runtime.env -f ./compose.yaml config --quiet
+```
+
+Успех — команда завершилась без ошибки; вывода может не быть. Затем:
+
+```sh
+docker compose --env-file ./runtime.env -f ./compose.yaml pull app
+```
+
+Если GHCR отвечает `unauthorized` или `denied`, выполни `docker login ghcr.io`:
+используй логин GitHub и personal access token **classic** с `read:packages`,
+у которого есть доступ к образу. Публичные образы можно скачивать без входа.
+
+### 6. На сервере: примени миграции
+
+При обновлении используется уже работающая PostgreSQL. Проверь её состояние:
+
+```sh
+docker compose --env-file ./runtime.env -f ./compose.yaml ps db
+```
+
+Для встроенной БД ожидается `healthy`. Если она остановлена, запусти её без
+пересоздания существующего контейнера и дождись готовности:
+
+```sh
+docker compose --env-file ./runtime.env -f ./compose.yaml up -d --no-recreate --wait db
+```
+
+Если в релизе есть новые SQL-миграции, заранее сделай резервную копию БД и
+проверь совместимость схемы с текущей и предыдущей версиями приложения.
+Затем примени миграции **из новой папки релиза**:
+
+```sh
+docker compose --env-file ./runtime.env -f ./compose.yaml run --rm migrate up
+```
+
+Применятся только ещё не выполненные миграции. `no change` означает, что
+обновлений схемы нет. При ошибке миграции останови обновление и разбери причину.
+Приложение само миграции не выполняет.
+
+### 7. На сервере: переключи приложение и проверь его
+
+```sh
+docker compose --env-file ./runtime.env -f ./compose.yaml up -d --no-deps --no-build --pull never app
+```
+
+Compose заменит контейнер приложения, используя скачанный образ и новые
+настройки. При переключении возможен короткий перерыв. Команда затрагивает
+только `app`; PostgreSQL продолжает работать.
+
+```sh
+docker compose --env-file ./runtime.env -f ./compose.yaml ps
+docker compose --env-file ./runtime.env -f ./compose.yaml logs --tail=50 app
+```
+
+У `app` должно быть состояние `Up`, у `db` — `healthy`; в логах приложения
+не должно быть ошибок запуска или повторных перезапусков. Открой сайт через
+домен по HTTPS, проверь вход и обмен сообщениями между двумя вкладками или
+пользователями — это также проверяет WebSocket.
+
+Сохрани предыдущую папку с её `runtime.env` и прежний образ Docker: они нужны
+для возврата. Архив и его контрольную сумму тоже сохрани: артефакты Actions
+имеют ограниченный срок хранения.
+
+## Первый запуск
+
+Нужен сервер Linux/amd64 с Docker Compose, настроенным Nginx, доменом и HTTPS.
+Примеры Nginx находятся в `deploy/nginx.conf` и `deploy/nginx-http.conf`.
+Команда `make deploy` предназначена для локальной разработки.
+
+1. На сервере создай каталог `mkdir -p ~/messenger/releases`.
+2. Скачай, перенеси и распакуй архив по шагам 2–3 выше.
+3. Из распакованной папки создай настройки:
+
+```sh
+umask 077
+test ! -e ./runtime.env && test ! -L ./runtime.env &&
+cp ./runtime.example.env ./runtime.env &&
+chmod 600 ./runtime.env
+nano runtime.env
+```
+
+Да, для новой установки `runtime.env` создаётся копированием
+`runtime.example.env`. Заполни все обязательные значения из таблицы ниже.
+Для новой базы задай новый пароль и `JWT_SECRET`; случайные значения можно
+получить отдельными вызовами `openssl rand -hex 32`.
+
+При переходе со старой установки используй её существующий `.env` как источник
+вместо шаблона, например `/srv/messenger/.env`. Сохрани ключ подписи, реквизиты
+базы и путь `MESSENGER_ROOT`, затем добавь `APP_IMAGE` и `APP_PORT`.
+
+Папка релизов и каталог данных БД — разные настройки. Например, релизы могут
+лежать в `/root/messenger/releases`, а `MESSENGER_ROOT=/srv/messenger` продолжит
+указывать на существующие данные `/srv/messenger/data`.
+Изменение `POSTGRES_PASSWORD`, `POSTGRES_USER` или `POSTGRES_DB` в env-файле
+не меняет пароль, роль или базу в уже инициализированном PostgreSQL.
+
+Создай `release.json` по шагу 4 и выполни шаги 5–7. На шаге 6 запусти `db`
+командой с `--wait`, затем выполни миграции и запусти приложение.
+
+## Возврат предыдущего релиза
+
+Возврат использует образ и настройки **из предыдущей папки**. Сначала убедись,
+что предыдущая версия приложения совместима с текущей схемой БД. Затем на сервере:
+
+```sh
+PREVIOUS_RELEASE_ID='ID_ПРЕДЫДУЩЕГО_РЕЛИЗА'
+cd "$HOME/messenger/releases/$PREVIOUS_RELEASE_ID" &&
+docker compose --env-file ./runtime.env -f ./compose.yaml config --quiet
+```
+
+После успешной проверки переключи приложение:
+
+```sh
+docker compose --env-file ./runtime.env -f ./compose.yaml up -d --no-deps --no-build --pull never app
+docker compose --env-file ./runtime.env -f ./compose.yaml ps
+docker compose --env-file ./runtime.env -f ./compose.yaml logs --tail=50 app
+```
+
+Проверь HTTPS, вход и сообщения так же, как после обновления. Если прежний
+образ уже удалён с сервера, сначала скачай его командой `pull app` из этой же
+папки. Для возврата без доступа к реестру образ должен оставаться локально.
+
+Эта процедура возвращает версию приложения и её конфигурацию. Схема и данные
+БД остаются текущими; восстановление БД из копии и обратные миграции требуют
+отдельного решения. Внешняя конфигурация Nginx также управляется отдельно.
+
+Для первой проверки выбери обновление без новых SQL-миграций, например
+исправление команды мигратора. Пройди **A → B → A**: запущенный релиз A,
+обновление до B, возврат к A. В каждом состоянии проверь `APP_IMAGE` в его
+`runtime.env`, фактически работающий образ и функции приложения:
+
+```sh
+docker inspect messenger-app-1 --format '{{.Config.Image}}'
+```
+
+Сравни вывод с полем `image` в соответствующем `build.json`. После проверки
+можно снова активировать B командой запуска из его папки.
+
+## Какие файлы хранит релиз
+
+```text
+~/messenger/releases/<release-id>/
+  compose.yaml
+  migrations/*.up.sql
+  migrations/*.down.sql
+  runtime.example.env
+  build.json
+  checksums.sha256
+  runtime.env          # создаётся на сервере
+  release.json         # создаётся на сервере
+```
+
+| Файл | Для чего нужен |
+| --- | --- |
+| `compose.yaml` | Описывает сервисы приложения, PostgreSQL и мигратора |
+| `migrations/` | SQL-миграции из того же коммита, что и сборка |
+| `runtime.example.env` | Шаблон серверных настроек без секретов |
+| `build.json` | ID сборки, коммит, ссылка на образ по digest и URL запуска CI |
+| `checksums.sha256` | Проверка целостности файлов из архива |
+| `runtime.env` | Сохранённые настройки конкретного релиза, включая секреты |
+| `release.json` | Связь сборки с версией серверной конфигурации |
+
+Готовое приложение находится в образе GHCR. Digest `sha256:...` однозначно
+определяет содержимое образа. PostgreSQL и мигратор сейчас указаны тегами
+версий; фиксация их образов по digest остаётся отдельной задачей.
+
+Приложение собирается корневым `Dockerfile`: он включает сборку UI, templ и Go.
+Упаковщик читает файлы из указанного Git-коммита. Локальные правки и секреты
+сервера в архив не включаются. Контрольные суммы проверяют целостность файлов,
+но не являются цифровой подписью.
+
+### Ручная упаковка вместо CI
+
+Для обычного обновления достаточно архива из Actions. Если требуется упаковать
+его вручную, нужны Git и Python 3.10+. Из рабочего каталога репозитория выполни:
+
+```sh
+python3 scripts/package-release.py \
+  --commit "$SOURCE_COMMIT" \
+  --image "$APP_IMAGE" \
+  --release-id "$RELEASE_ID" \
+  --build-url "$BUILD_URL"
+```
+
+Предварительно задай переменные: `SOURCE_COMMIT` и полный `APP_IMAGE` с
+`@sha256:...` возьми из одной успешной сборки, `RELEASE_ID` выбери уникальным,
+`BUILD_URL` укажи на её запуск. Упаковщик сам не сверяет образ с реестром.
+Результат появится в `out/releases/`. Существующие архивы не перезаписываются.
+Сам образ эта команда не собирает и не публикует.
+
+## Справочник настроек
+
+Приложение читает переменные окружения. Compose берёт значения из выбранного
+`runtime.env` и передаёт их приложению, PostgreSQL и мигратору. Во всех командах
+явно указан `--env-file ./runtime.env`. Переменные, экспортированные в оболочке,
+имеют приоритет над этим файлом: для повторяемого запуска используй сохранённый
+файл и убери конфликтующие экспортированные значения.
+
+### Обязательные значения
+
+| Настройка | Что указать |
+| --- | --- |
+| `APP_IMAGE` | Поле `image` из `build.json` этого релиза, целиком с digest |
+| `APP_ORIGIN` | Публичный адрес, например `https://nero.wrzdx.tech` |
+| `APP_PORT` | Порт на сервере для Nginx; в существующей настройке `5051` |
+| `MESSENGER_ROOT` | Абсолютный каталог, внутри которого PostgreSQL хранит `data/` |
+| `JWT_SECRET` | Ключ подписи; при обновлении сохрани прежний |
+| `POSTGRES_PASSWORD` | Пароль, соответствующий роли в настоящей базе |
+
+### Необязательные значения
+
+Если значение не задано, Compose использует значение по умолчанию:
+
+| Настройка | По умолчанию | Назначение |
+| --- | --- | --- |
+| `POSTGRES_HOST` | `db` | Адрес БД для приложения и мигратора |
+| `POSTGRES_PORT` | `5432` | Порт подключения к БД; порт самого сервера БД не меняет |
+| `POSTGRES_USER` | `messenger` | Роль БД |
+| `POSTGRES_DB` | `messenger` | Имя базы |
+| `POSTGRES_TIMEOUT` | `10s` | Положительное время ожидания БД при старте Nero |
+| `POSTGRES_SSLMODE` | `disable` | Nero принимает `disable` и `verify-full` |
+| `POSTGRES_SSLROOTCERT` | пусто | Путь к CA внутри контейнеров; нужен для `verify-full` |
+| `TIME_ZONE` | `UTC` | Часовой пояс, например `Europe/Moscow` |
+| `LOGGER_LEVEL` | `INFO` | Уровень логов; вывод идёт в stdout |
+| `AUTH_ACCESS_TOKEN_TTL` | `15m` | Срок жизни access-токена |
+| `AUTH_SESSION_TTL` | `24h` | Срок жизни refresh-сессии |
+| `HTTP_SHUTDOWN_TIMEOUT` | `30s` | Время на завершение приложения |
+| `APP_STOP_GRACE_PERIOD` | `35s` | Время ожидания Docker; должно быть больше таймаута приложения |
+| `APP_MEMORY_LIMIT` | `256m` | Лимит памяти приложения |
+| `APP_CPU_LIMIT` | `1.0` | Лимит CPU приложения |
+| `GOMEMLIMIT` | `192MiB` | Мягкий лимит Go; оставь запас до лимита контейнера |
+| `DB_MEMORY_LIMIT` | `384m` | Лимит памяти PostgreSQL |
+| `DB_CPU_LIMIT` | `1.0` | Лимит CPU PostgreSQL |
+
+Compose также задаёт `ENVIRONMENT=production`, `HTTP_ADDR=:5050` и
+`STATIC_DIR=/app/web/static`. Порт приложения публикуется на `127.0.0.1`.
+Мигратор получает параметры подключения через `PG*` и использует адрес
+`postgres:///` с тремя слешами.
+
+Базовый Compose запускает PostgreSQL без серверного TLS и не монтирует CA.
+Для `verify-full` нужны БД с TLS и дополнительный Compose-файл, который
+монтирует CA только для чтения в `app` и `migrate` по указанному пути.
+Для работы только с внешней БД также требуется изменить зависимость `app`
+от встроенного `db`. Эти варианты требуют отдельной проверки развёртывания.
+
+Документация: [скачивание артефактов Actions](https://docs.github.com/en/actions/how-tos/manage-workflow-runs/download-workflow-artifacts),
+[доступ к GHCR](https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry),
+[переключение контейнеров Compose](https://docs.docker.com/reference/cli/docker/compose/up/),
+[приоритет переменных Compose](https://docs.docker.com/compose/how-tos/environment-variables/variable-interpolation/),
+[V: Build, release, run](https://12factor.net/build-release-run),
+[XII: Admin processes](https://12factor.net/admin-processes).

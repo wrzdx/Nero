@@ -63,25 +63,15 @@ migrate-action:
 logs:
 	@docker compose logs --tail=100 messenger
 
-logs-cleanup:
-	@read -p "Очистить все log файлы? Опасность утери логов. [y/N]: " ans; \
-	if [ "$$ans" = "y" ]; then \
-		rm -rf ${PROJECT_ROOT}/out/logs && \
-		echo "Файлы логов очищены"; \
-	else \
-		echo "Очистка логов отменена"; \
-	fi
 
 run:
-	@export LOGGER_FOLDER=${PROJECT_ROOT}/out/logs && \
-	export POSTGRES_HOST=localhost && \
+	@export POSTGRES_HOST=localhost && \
 	export STATIC_DIR=./web/static && \
 	go mod tidy && \
 	go run ${PROJECT_ROOT}/cmd/nero/main.go
 
 dev:
-	@export LOGGER_FOLDER="${PROJECT_ROOT}/out/logs" && \
-	export POSTGRES_HOST=localhost && \
+	@export POSTGRES_HOST=localhost && \
 	export STATIC_DIR="${PROJECT_ROOT}/web/static" && \
 	go tool templ generate --watch --proxy="http://localhost:5050" --cmd="go run ./cmd/nero"
 

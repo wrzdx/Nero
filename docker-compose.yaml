@@ -1,17 +1,15 @@
 services:
   messenger:
     build:
-      dockerfile: cmd/nero/Dockerfile
+      context: .
+      dockerfile: Dockerfile
     container_name: nero-local
     env_file:
       - .env
     environment:
       - HTTP_ADDR=:5050
       - POSTGRES_HOST=postgres
-      - LOGGER_FOLDER=/app/out/logs
       - STATIC_DIR=/app/web/static
-    volumes:
-      - ${PROJECT_ROOT}/out/logs:/app/out/logs
     ports:
       - "5050:5050"
     restart: always

@@ -1,42 +1,46 @@
 name: messenger
 
+x-postgres:
+  host: &pg-host ${POSTGRES_HOST:-db}
+  port: &pg-port "${POSTGRES_PORT:-5432}"
+  user: &pg-user ${POSTGRES_USER:-messenger}
+  password: &pg-password ${POSTGRES_PASSWORD:?required}
+  database: &pg-database ${POSTGRES_DB:-messenger}
+  sslmode: &pg-sslmode ${POSTGRES_SSLMODE:-disable}
+  sslrootcert: &pg-sslrootcert ${POSTGRES_SSLROOTCERT:-}
+
 services:
   app:
-    image: nero:${RELEASE_ID:?required}
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: ${APP_IMAGE:?required}
     environment:
       HTTP_ADDR: :5050
-      HTTP_SHUTDOWN_TIMEOUT: 30s
+      HTTP_SHUTDOWN_TIMEOUT: ${HTTP_SHUTDOWN_TIMEOUT:-30s}
       HTTP_ALLOWED_ORIGINS: ${APP_ORIGIN:?required}
       ENVIRONMENT: production
-      TIME_ZONE: UTC
+      TIME_ZONE: ${TIME_ZONE:-UTC}
       STATIC_DIR: /app/web/static
-      AUTH_ACCESS_TOKEN_TTL: 15m
-      AUTH_SESSION_TTL: 24h
       JWT_SECRET: ${JWT_SECRET:?required}
-      POSTGRES_HOST: db
-      POSTGRES_PORT: "5432"
-      POSTGRES_USER: messenger
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?required}
-      POSTGRES_DB: messenger
-      POSTGRES_TIMEOUT: 10s
-      LOGGER_LEVEL: INFO
-      LOGGER_FOLDER: /app/logs
-      GOMEMLIMIT: 192MiB
-      GOMAXPROCS: "2"
+      POSTGRES_HOST: *pg-host
+      POSTGRES_PORT: *pg-port
+      POSTGRES_USER: *pg-user
+      POSTGRES_PASSWORD: *pg-password
+      POSTGRES_DB: *pg-database
+      POSTGRES_TIMEOUT: ${POSTGRES_TIMEOUT:-10s}
+      LOGGER_LEVEL: ${LOGGER_LEVEL:-INFO}
+      POSTGRES_SSLMODE: *pg-sslmode
+      POSTGRES_SSLROOTCERT: *pg-sslrootcert
+      AUTH_ACCESS_TOKEN_TTL: ${AUTH_ACCESS_TOKEN_TTL:-15m}
+      AUTH_SESSION_TTL: ${AUTH_SESSION_TTL:-24h}
+      GOMEMLIMIT: ${GOMEMLIMIT:-192MiB}
     ports:
-      - "127.0.0.1:5051:5050"
-    volumes:
-      - ${MESSENGER_ROOT:?required}/logs:/app/logs
+      - "127.0.0.1:${APP_PORT:?required}:5050"
     depends_on:
       db:
         condition: service_healthy
     restart: unless-stopped
-    stop_grace_period: 35s
-    mem_limit: 256m
-    cpus: 1.0
+    stop_grace_period: ${APP_STOP_GRACE_PERIOD:-35s}
+    mem_limit: ${APP_MEMORY_LIMIT:-256m}
+    cpus: ${APP_CPU_LIMIT:-1.0}
     read_only: true
     cap_drop: [ALL]
     security_opt: [no-new-privileges:true]
@@ -49,20 +53,20 @@ services:
   db:
     image: postgres:18-bookworm
     environment:
-      POSTGRES_USER: messenger
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?required}
-      POSTGRES_DB: messenger
+      POSTGRES_USER: *pg-user
+      POSTGRES_PASSWORD: *pg-password
+      POSTGRES_DB: *pg-database
     command: [postgres, -c, max_connections=50, -c, shared_buffers=64MB]
     volumes:
       - ${MESSENGER_ROOT:?required}/data:/var/lib/postgresql
     healthcheck:
-      test: [CMD-SHELL, 'pg_isready -U messenger -d messenger']
+      test: [CMD-SHELL, 'pg_isready -U "$$POSTGRES_USER" -d "$$POSTGRES_DB"']
       interval: 5s
       timeout: 3s
       retries: 20
     restart: unless-stopped
-    mem_limit: 384m
-    cpus: 1.0
+    mem_limit: ${DB_MEMORY_LIMIT:-384m}
+    cpus: ${DB_CPU_LIMIT:-1.0}
     logging:
       driver: json-file
       options:
@@ -72,8 +76,16 @@ services:
   migrate:
     image: migrate/migrate:v4.19.1
     profiles: [tools]
+    environment:
+      PGHOST: *pg-host
+      PGPORT: *pg-port
+      PGUSER: *pg-user
+      PGPASSWORD: *pg-password
+      PGDATABASE: *pg-database
+      PGSSLMODE: *pg-sslmode
+      PGSSLROOTCERT: *pg-sslrootcert
     volumes:
       - ./migrations:/migrations:ro
-    entrypoint: [migrate, -path, /migrations, -database, 'postgres://messenger:${POSTGRES_PASSWORD:?required}@db:5432/messenger?sslmode=disable']
+    entrypoint: [migrate, -path, /migrations, -database, 'postgres:///']
     command: [up]
     mem_limit: 128m

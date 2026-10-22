@@ -3,6 +3,8 @@ package main
 import (
 	"context"
 	"fmt"
+	"net/http"
+
 	auth_bcrypt "github.com/wrzdx/Nero/internal/core/auth/bcrypt"
 	auth_cookie "github.com/wrzdx/Nero/internal/core/auth/cookie"
 	auth_jwt "github.com/wrzdx/Nero/internal/core/auth/jwt"
@@ -12,7 +14,11 @@ import (
 	http_middleware "github.com/wrzdx/Nero/internal/core/transport/http/middleware"
 	http_server "github.com/wrzdx/Nero/internal/core/transport/http/server"
 	web_handlers "github.com/wrzdx/Nero/internal/web/handlers"
-	"net/http"
+
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
 
 	auth_postgres_repository "github.com/wrzdx/Nero/internal/features/auth/repository/postgres"
 	auth_service "github.com/wrzdx/Nero/internal/features/auth/service"
@@ -27,16 +33,19 @@ import (
 	users_postgres_repository "github.com/wrzdx/Nero/internal/features/users/repository/postgres"
 	users_service "github.com/wrzdx/Nero/internal/features/users/service"
 	users_transport_http "github.com/wrzdx/Nero/internal/features/users/transport/http"
-	"os"
-	"os/signal"
-	"syscall"
-	"time"
 
 	"github.com/go-chi/chi/v5"
 	"go.uber.org/zap"
 )
 
 func main() {
+	if err := run(); err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
+}
+
+func run() error {
 	cfg := config.NewConfigMust()
 	time.Local = cfg.TimeZone
 
@@ -50,11 +59,8 @@ func main() {
 
 	logger, err := logger.NewLogger(logger.NewConfigMust())
 	if err != nil {
-		fmt.Println("failed to init application logger:", err)
-		os.Exit(1)
+		return fmt.Errorf("failed to init application logger: %w", err)
 	}
-
-	defer logger.Close()
 
 	logger.Debug("application time zone", zap.Any("zone", time.Local))
 	logger.Debug("initializing postgres connection pool")
@@ -64,7 +70,7 @@ func main() {
 		postgresConfig,
 	)
 	if err != nil {
-		logger.Fatal("failed to init postgres connection pool", zap.Error(err))
+		return fmt.Errorf("failed to init postgres connection pool: %w", err)
 	}
 
 	defer pool.Close()
@@ -101,7 +107,7 @@ func main() {
 	)
 
 	if err != nil {
-		logger.Fatal("failed create auth service", zap.Error(err))
+		return fmt.Errorf("failed create auth service: %w", err)
 	}
 
 	authHTTP := auth_transport_http.NewAuthHTTPHandler(
@@ -201,9 +207,12 @@ func main() {
 		httpConfig,
 		logger,
 		router,
+		realtimeWS.Shutdown,
 	)
 
 	if err := httpServer.Run(ctx); err != nil {
-		logger.Error("HTTP server run error", zap.Error(err))
+		return fmt.Errorf("run HTTP server: %w", err)
 	}
+
+	return nil
 }
